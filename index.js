@@ -6,10 +6,21 @@ var parcelMap = require('parcel-map');
 var match = require('minimatch');
 var shasum = require('shasum');
 var EventEmitter = require('events').EventEmitter;
+var mkdirp = require('mkdirp');
 
 module.exports = function (b, opts, cb) {
-    parcelMap(b, opts, function (err, map) {
+    var pending = 2, map;
+    mkdirp(opts.dst, function () {
+        if (-- pending === 0) fromMap(map);
+    });
+    
+    parcelMap(b, opts, function (err, map_) {
         if (err) return cb(err);
+        map = map_;
+        if (-- pending === 0) fromMap(map);
+    });
+    
+    function fromMap (map) {
         outer.emit('map', map);
         
         var packages = {};
@@ -28,21 +39,21 @@ module.exports = function (b, opts, cb) {
             var pkg = packages[key];
             var dir = pkg.package.__dirname || opts.basedir || process.cwd();
             var props = opts.keys || [];
-            var files = {};
+            pkg.files = {};
             
             pkg.assets.forEach(function (file) {
                 props.forEach(function (prop) {
-                    files[prop] = [];
+                    pkg.files[prop] = [];
                     
                     var pattern = pkg.package[prop];
                     var rel = path.relative(dir, file);
-                    if (match(rel, pattern)) files[prop].push(file);
+                    if (match(rel, pattern)) pkg.files[prop].push(file);
                 });
             });
             
-            console.log(files);
+            outer.emit('package', pkg);
         });
-    });
+    }
     
     var outer = new EventEmitter;
     b.bundle();
