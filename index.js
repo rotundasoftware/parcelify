@@ -31,7 +31,7 @@ module.exports = function (b, opts) {
                 if (err) return outer.emit('error', err);
                 
                 var p = pkg.package;
-                p.path = outdir;
+                p.path = pkg.path;
                 if (!p.cartero) p.cartero = {};
                 console.log(pkg.files);
                 
