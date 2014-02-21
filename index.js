@@ -3,48 +3,48 @@ var mapper = require('parcel-map');
 var fs = require('fs');
 var path = require('path');
 var parcelMap = require('parcel-map');
+var match = require('minimatch');
+var shasum = require('shasum');
+var EventEmitter = require('events').EventEmitter;
 
-module.exports = function (opts, bundler, cb) {
-    detect(opts.dir, function (err, detected) {
+module.exports = function (b, opts, cb) {
+    parcelMap(b, opts, function (err, map) {
         if (err) return cb(err);
+        outer.emit('map', map);
         
-        var keys = Object.keys(detected);
-        var pending = keys.length;
-        var mains = [];
+        var packages = {};
+        Object.keys(map.packages).forEach(function (key) {
+            packages[key] = {
+                package: map.packages[key],
+                assets: []
+            };
+        });
+        Object.keys(map.assets).forEach(function (key) {
+            var pkg = map.assets[key];
+            packages[pkg].assets.push(key);
+        });
         
-        keys.forEach(function (key) {
-            var pkg = detected[key];
-            var pkgdir = path.dirname(key);
+        Object.keys(packages).forEach(function (key) {
+            var pkg = packages[key];
+            var dir = pkg.package.__dirname || opts.basedir || process.cwd();
+            var props = opts.keys || [];
+            var files = {};
             
-            if (pkg.browser && typeof pkg.browser === 'string') {
-                return set(pkg.browser);
-            }
-            if (pkg.main && pkg.browser) {
-                var bkeys = Object.keys(pkg.browser).map(function (k) {
-                    return path.relative('.', k);
+            pkg.assets.forEach(function (file) {
+                props.forEach(function (prop) {
+                    files[prop] = [];
+                    
+                    var pattern = pkg.package[prop];
+                    var rel = path.relative(dir, file);
+                    if (match(rel, pattern)) files[prop].push(file);
                 });
-                var ix = bkeys.indexOf(pkg.main);
-                if (ix >= 0) return set(bkeys[i]);
-            }
-            if (pkg.main) return set(pkg.main);
-            
-            var main = path.resolve(pkgdir, 'index.js');
-            fs.exists(main, function (ex) {
-                if (ex) set('index.js')
-                else set();
             });
             
-            function set (x) {
-                if (x) mains.push(path.resolve(pkgdir, x));
-                if (--pending === 0) {
-                    console.log('mains=', mains);
-                }
-            }
+            console.log(files);
         });
-        /*
-        var b = bundler(mains);
-        parcelMap(b, opts, function (err, graph) {
-        });
-        */
     });
+    
+    var outer = new EventEmitter;
+    b.bundle();
+    return outer;
 };
