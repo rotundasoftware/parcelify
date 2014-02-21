@@ -2,6 +2,7 @@ var mapper = require('parcel-map');
 var fs = require('fs');
 var path = require('path');
 var parcelMap = require('parcel-map');
+var packageWriter = require('package-writer');
 var match = require('minimatch');
 var shasum = require('shasum');
 var EventEmitter = require('events').EventEmitter;
@@ -28,6 +29,14 @@ module.exports = function (b, opts) {
             
             mkdirp(outdir, function (err) {
                 if (err) return outer.emit('error', err);
+                
+                var p = pkg.package;
+                p.path = outdir;
+                if (!p.cartero) p.cartero = {};
+                console.log(pkg.files);
+                
+                var streams = packageWriter(p, pkg.files, outdir);
+                console.log(streams);
                 
                 var h = crypto.createHash('sha1');
                 ostream.pipe(h).pipe(concat(function (buf) {
