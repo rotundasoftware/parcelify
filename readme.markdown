@@ -92,6 +92,11 @@ Example `pkg` output:
 This event fires when the asset map from
 [parcel-map](https://npmjs.org/package/parcel-map) is available.
 
+## cp.on('done', function () {})
+
+When the package and all dependent packages are completely written, this event
+fires.
+
 # install
 
 With [npm](https://npmjs.org) do:
