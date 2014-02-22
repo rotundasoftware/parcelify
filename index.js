@@ -27,7 +27,10 @@ module.exports = function (b, opts) {
             var tmpjs = path.join(outdir, '.bundle_' + pkg.hash + '.js');
             var tmpcss = path.join(outdir, '.bundle_' + pkg.hash + '.css');
             
-            var pending = 4, hashjs, hashcss;
+            var pending = 4
+            var streamPending = 4;
+            var hashjs, hashcss;
+            
             var fileTypes = Object.keys(pkg.files).reduce(function (acc, key) {
                 pkg.files[key].forEach(function (file) {
                     acc[file] = key;
@@ -35,7 +38,11 @@ module.exports = function (b, opts) {
                 return acc;
             }, {});
             
-            mkdirp(outdir, function (err) {
+            fs.mkdir(outdir, function (err) {
+                if (err && err.code === 'EEXIST') {
+                    // some other instance has created this directory
+                    return done();
+                }
                 if (err) return outer.emit('error', err);
                 
                 var p = pkg.package;
@@ -45,6 +52,11 @@ module.exports = function (b, opts) {
                 var streams = packageWriter(p, pkg.files, outdir);
                 var types = {};
                 Object.keys(streams).forEach(function (key) {
+                    streamPending ++;
+                    streams[key].on('end', function () {
+                        if (--streamPending === 0) outer.emit('done');
+                    });
+                    
                     var t = fileTypes[key];
                     if (!types[t]) types[t] = {};
                     types[t][key] = streams[key];
@@ -81,6 +93,7 @@ module.exports = function (b, opts) {
             });
             
             function done () {
+                if (--streamPending === 0) outer.emit('done');
                 if (--pending !== 0) return;
                 var dstjs = path.join(outdir, 'bundle_' + hashjs + '.js');
                 var dstcss = path.join(outdir, 'bundle_' + hashcss + '.css');
@@ -116,6 +129,7 @@ module.exports = function (b, opts) {
             var pkg = packages[key];
             var dir = pkg.package.__dirname || opts.basedir || process.cwd();
             var props = opts.keys || [];
+            pkg.id = key;
             pkg.files = {};
             pkg.path = dir;
             pkg.dependencies = map.dependencies[key] || [];
