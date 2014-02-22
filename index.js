@@ -19,6 +19,7 @@ module.exports = function (b, opts) {
             if (err) return output.emit('error', err);
             withMap(map);
         });
+        var pendingIO = 0;
         var ostream = b.bundle().pipe(through2());
         ostream.pause();
         
@@ -28,7 +29,6 @@ module.exports = function (b, opts) {
             var tmpcss = path.join(outdir, '.bundle_' + pkg.hash + '.css');
             
             var pending = 4
-            var streamPending = 4;
             var hashjs, hashcss;
             
             var fileTypes = Object.keys(pkg.files).reduce(function (acc, key) {
@@ -38,12 +38,15 @@ module.exports = function (b, opts) {
                 return acc;
             }, {});
             
+            pendingIO ++;
             fs.mkdir(outdir, function (err) {
                 if (err && err.code === 'EEXIST') {
                     // some other instance has created this directory
-                    return done();
+                    if (--pendingIO === 0) finish();
+                    return;
                 }
                 if (err) return outer.emit('error', err);
+                pendingIO += 4 - 1;
                 
                 var p = pkg.package;
                 p.path = pkg.path;
@@ -52,9 +55,9 @@ module.exports = function (b, opts) {
                 var streams = packageWriter(p, pkg.files, outdir);
                 var types = {};
                 Object.keys(streams).forEach(function (key) {
-                    streamPending ++;
+                    pendingIO ++;
                     streams[key].on('end', function () {
-                        if (--streamPending === 0) outer.emit('done');
+                        if (--pendingIO === 0) finish();
                     });
                     
                     var t = fileTypes[key];
@@ -93,18 +96,22 @@ module.exports = function (b, opts) {
             });
             
             function done () {
-                if (--streamPending === 0) outer.emit('done');
+                -- pendingIO;
                 if (--pending !== 0) return;
+                pendingIO += 2;
+                
                 var dstjs = path.join(outdir, 'bundle_' + hashjs + '.js');
                 var dstcss = path.join(outdir, 'bundle_' + hashcss + '.css');
                 
                 fs.rename(tmpjs, dstjs, function (err) {
-                    if (err) outer.emit('error', err)
-                    else outer.emit('bundle.js', dstjs)
+                    if (err) return outer.emit('error', err)
+                    outer.emit('bundle.js', dstjs);
+                    if (--pendingIO === 0) finish();
                 });
                 fs.rename(tmpcss, dstcss, function (err) {
-                    if (err) outer.emit('error', err)
-                    else outer.emit('bundle.css', dstcss)
+                    if (err) return outer.emit('error', err)
+                    outer.emit('bundle.css', dstcss);
+                    if (--pendingIO === 0) finish();
                 });
             }
         });
@@ -149,6 +156,7 @@ module.exports = function (b, opts) {
         });
     }
     
+    function finish () { outer.emit('done') }
     var outer = new EventEmitter;
     return outer;
 };
