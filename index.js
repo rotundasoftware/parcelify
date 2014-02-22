@@ -42,8 +42,21 @@ function P (b, opts) {
     });
     
     function isParcel (pkg) {
-        console.log(pkg);
-        return false;
+        var main = 'index.js';
+        if (pkg.main) main = pkg.main;
+        if (typeof pkg.browser === 'string') {
+            main = pkg.browser;
+        }
+        if (pkg.browser) {
+            var browser = {};
+            Object.keys(pkg.browser).forEach(function (key) {
+                var file = path.resolve(pkg.path, key);
+                browser[file] = path.resolve(pkg.browser[key]);
+            });
+            if (browser[main]) main = browser[main];
+        }
+        main = path.resolve(pkg.path, main);
+        return b._entries.indexOf(main) >= 0;
     }
 };
 
