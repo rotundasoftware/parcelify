@@ -1,0 +1,41 @@
+{
+  "name": "parcel-processor",
+  "version": "0.0.0",
+  "description": "write asset files to a package directry given an entry point",
+  "main": "index.js",
+  "dependencies": {
+    "concat-stream": "~1.4.1",
+    "minimatch": "~0.2.14",
+    "mkdirp": "~0.3.5",
+    "through2": "~0.4.1",
+    "package-writer": "~0.0.1",
+    "parcel-map": "~0.1.0",
+    "shasum": "~1.0.0"
+  },
+  "devDependencies": {
+    "tape": "~2.3.2",
+    "browserify": "~3.30.2"
+  },
+  "scripts": {
+    "test": "tape test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/rotundasoftware/parcel-processor.git"
+  },
+  "homepage": "https://github.com/rotundasoftware/parcel-processor",
+  "keywords": [
+    "parcel",
+    "asset"
+  ],
+  "author": {
+    "name": "Rotunda Software",
+    "email": "support@rotundasoftware.com"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/rotundasoftware/parcel-processor/blob/master/LICENSE"
+    }
+  ]
+}
