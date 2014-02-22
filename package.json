@@ -10,7 +10,8 @@
     "through2": "~0.4.1",
     "package-writer": "~0.1.0",
     "parcel-map": "~0.1.0",
-    "shasum": "~1.0.0"
+    "shasum": "~1.0.0",
+    "inherits": "^2.0.1"
   },
   "devDependencies": {
     "tape": "~2.3.2",
