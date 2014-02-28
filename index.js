@@ -39,7 +39,9 @@ function P (b, opts) {
             if (p.isParcelOf(b)) {
                 ostream.pipe(p);
             }
-            p.writeFiles(path.join(opts.dst, pkg.hash));
+            p.writeFiles(path.join(opts.dst, pkg.hash), function (err) {
+                if (err) self.emit('error', err);
+            });
         });
     });
 };
