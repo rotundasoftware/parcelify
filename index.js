@@ -13,6 +13,7 @@ var concat = require('concat-stream');
 var fs = require('fs');
 var inherits = require('inherits');
 var EventEmitter = require('events').EventEmitter;
+var Package = require('./lib/package.js');
 
 module.exports = P;
 inherits(P, EventEmitter);
@@ -39,26 +40,8 @@ function P (b, opts) {
                 ostream.pipe(p);
             }
             p.writeFiles(path.join(opts.dst, pkg.hash));
-        }
+        });
     });
-    
-    function isParcel (pkg) {
-        var main = 'index.js';
-        if (pkg.main) main = pkg.main;
-        if (typeof pkg.browser === 'string') {
-            main = pkg.browser;
-        }
-        if (pkg.browser) {
-            var browser = {};
-            Object.keys(pkg.browser).forEach(function (key) {
-                var file = path.resolve(pkg.path, key);
-                browser[file] = path.resolve(pkg.browser[key]);
-            });
-            if (browser[main]) main = browser[main];
-        }
-        main = path.resolve(pkg.path, main);
-        return b._entries.indexOf(main) >= 0;
-    }
 };
 
 P.prototype._withMap = function (map) {
