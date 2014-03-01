@@ -1,55 +1,57 @@
 var fs = require('fs');
 var path = require('path');
 var parcelMap = require('parcel-map');
-var packageWriter = require('package-writer');
 var match = require('minimatch');
 var shasum = require('shasum');
 var mkdirp = require('mkdirp');
 var through2 = require('through2');
 var path = require('path');
-var crypto = require('crypto');
-var concat = require('concat-stream');
 
 var fs = require('fs');
-var inherits = require('inherits');
 var EventEmitter = require('events').EventEmitter;
 var Package = require('./lib/package.js');
 
-module.exports = P;
-inherits(P, EventEmitter);
-
-function P (b, opts) {
-    var self = this;
-    if (!(self instanceof P)) return new P(b, opts);
-    EventEmitter.call(self);
-    
-    self._pending = 0;
-    self._opts = opts;
+module.exports = function (b, opts, cb) {
+    var self = new EventEmitter;
+    var ostream;
+    if (cb) {
+        self.on('error', cb);
+        self.on('done', cb);
+    }
     
     mkdirp(opts.dst, function () {
         parcelMap(b, opts, function (err, map) {
-            if (err) return output.emit('error', err);
-            self._withMap(map);
-        });
-        var ostream = b.bundle().pipe(through2());
-        ostream.pause();
-        
-        self.on('package', function (pkg) {
-            var p = new Package(pkg);
-            if (p.isParcelOf(b)) {
-                ostream.pipe(p);
-            }
-            p.writeFiles(path.join(opts.dst, pkg.hash), function (err) {
-                if (err) self.emit('error', err);
+            if (err) return self.emit('error', err);
+            self.emit('map', map);
+            var packages = fixMap(map, opts);
+            if (err) return self.emit('error', err);
+            
+            var keys = Object.keys(packages);
+            var pending = keys.length;
+            keys.forEach(function (key) {
+                onpackage(packages[key], function (err) {
+                    if (err) return self.emit('error', err);
+                    if (-- pending === 0) self.emit('done');
+                });
             });
         });
+        ostream = b.bundle().pipe(through2());
+        ostream.pause();
     });
+    return self;
+    
+    function onpackage (pkg, cb) {
+        var p = new Package(pkg);
+        var ws = p.writeFiles(path.join(opts.dst, pkg.id), cb);
+        if (p.isParcelOf(b)) {
+console.log('IS PARCEL'); 
+            ostream.pipe(ws);
+            ostream.resume();
+        }
+    }
 };
 
-P.prototype._withMap = function (map) {
-    var self = this;
-    self.emit('map', map);
-    
+function fixMap (map, opts) {
     var packages = {};
     Object.keys(map.packages).forEach(function (key) {
         packages[key] = {
@@ -62,15 +64,15 @@ P.prototype._withMap = function (map) {
         packages[pkg].assets.push(key);
     });
     
+    var results = {};
     Object.keys(packages).forEach(function (key) {
         var pkg = packages[key];
-        var dir = pkg.package.__dirname || self._opts.basedir || process.cwd();
-        var props = self._opts.keys || [];
+        var dir = pkg.package.__dirname || opts.basedir || process.cwd();
+        var props = opts.keys || [];
         pkg.id = key;
         pkg.files = {};
         pkg.path = dir;
         pkg.dependencies = map.dependencies[key] || [];
-        pkg.hash = shasum(dir + '!' + pkg.dependencies.join(','));
         
         pkg.assets.forEach(function (file) {
             props.forEach(function (prop) {
@@ -82,11 +84,7 @@ P.prototype._withMap = function (map) {
             });
         });
         
-        self.emit('package', pkg);
+        results[key] = pkg;
     });
-};
-
-P.prototype._add = function (n) {
-    this._pending += n;
-    if (this._pending === 0) this.emit('done');
+    return results;
 };
