@@ -73,6 +73,13 @@ function fixMap (map, opts) {
         pkg.files = {};
         pkg.path = dir;
         pkg.dependencies = map.dependencies[key] || [];
+        if (pkg.package.view) {
+            pkg.files.view = [].concat(pkg.package.view)
+                .map(function (file) {
+                    return path.resolve(pkg.path, file);
+                })
+            ;
+        }
         
         pkg.assets.forEach(function (file) {
             props.forEach(function (prop) {
