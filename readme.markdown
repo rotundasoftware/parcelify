@@ -13,11 +13,10 @@ var browserify = require('browserify');
 var path = require('path');
 var file = path.resolve(process.argv[2]);
 
-var opts = {
+copier(browserify(file), {
     keys: [ 'style' ],
     dst: __dirname + '/dst'
-};
-copier(browserify(file), opts);
+});
 ```
 
 # methods
@@ -61,6 +60,7 @@ This event fires when a package is being written.
 
 `pkg` has these properties:
 
+* `pkg.isParcel` - whether the package is a parcel
 * `pkg.package` - the package.json contents
 * `pkg.assets` - an array of assets paths declared in `pkg`
 * `pkg.id` - the package.json identifier from

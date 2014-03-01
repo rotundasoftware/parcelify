@@ -45,7 +45,9 @@ module.exports = function (b, opts, cb) {
             if (err) self.emit('error', err)
             else self.emit('done')
         });
-        if (p.isParcelOf(b)) ostream.pipe(ws);
+        pkg.isParcel = p.isParcelOf(b);
+        if (pkg.isParcel) ostream.pipe(ws);
+        self.emit('package', pkg);
     }
 };
 
@@ -85,4 +87,4 @@ function fixMap (map, opts) {
         results[key] = pkg;
     });
     return results;
-};
+}
