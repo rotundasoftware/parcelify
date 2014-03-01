@@ -36,18 +36,16 @@ module.exports = function (b, opts, cb) {
             });
         });
         ostream = b.bundle().pipe(through2());
-        ostream.pause();
     });
     return self;
     
     function onpackage (pkg, cb) {
         var p = new Package(pkg);
-        var ws = p.writeFiles(path.join(opts.dst, pkg.id), cb);
-        if (p.isParcelOf(b)) {
-console.log('IS PARCEL'); 
-            ostream.pipe(ws);
-            ostream.resume();
-        }
+        var ws = p.writeFiles(path.join(opts.dst, pkg.id), function (err) {
+            if (err) self.emit('error', err)
+            else self.emit('done')
+        });
+        if (p.isParcelOf(b)) ostream.pipe(ws);
     }
 };
 
