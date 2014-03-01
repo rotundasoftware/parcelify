@@ -11,7 +11,7 @@
     "package-writer": "~0.1.0",
     "parcel-map": "~1.0.1",
     "shasum": "~1.0.0",
-    "inherits": "^2.0.1"
+    "inherits": "~2.0.1"
   },
   "devDependencies": {
     "tape": "~2.3.2",
