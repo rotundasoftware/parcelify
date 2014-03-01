@@ -2,6 +2,8 @@
 
 write asset files to a package directory given an entry point
 
+[![build status](https://secure.travis-ci.org/rotundasoftware/parcel-processor.png)](http://travis-ci.org/rotundasoftware/parcel-processor)
+
 # example
 
 Given an entry point on `process.argv[2]`, create a browserify bundle and write
