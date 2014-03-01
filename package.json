@@ -1,6 +1,6 @@
 {
   "name": "parcel-processor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "write asset files to a package directry given an entry point",
   "main": "index.js",
   "dependencies": {
