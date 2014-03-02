@@ -86,8 +86,10 @@ function fixMap (map, opts) {
                 pkg.files[prop] = [];
                 
                 var pattern = pkg.package[prop];
-                var rel = path.relative(dir, file);
-                if (match(rel, pattern)) pkg.files[prop].push(file);
+                if (pattern) {
+                    var rel = path.relative(dir, file);
+                    if (match(rel, pattern)) pkg.files[prop].push(file);
+                }
             });
         });
         
