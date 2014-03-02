@@ -23,9 +23,9 @@ test('page1', function (t) {
         t.deepEqual(fs.readdirSync(dir).sort(), [
             'bundle_0410bd9e41e2f1c21f670d3492f250c8f070eb3f.css',
             'bundle_bd37f2061a35a1fed52946ae31e4227d61c9eb4d.js',
+            'empty.css',
             'view.html',
-            'x.css',
-            'empty.css'
+            'x.css'
         ]);
     });
 });
