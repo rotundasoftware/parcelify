@@ -83,7 +83,7 @@ function fixMap (map, opts) {
         
         pkg.assets.forEach(function (file) {
             props.forEach(function (prop) {
-                pkg.files[prop] = [];
+                if (!pkg.files[prop]) pkg.files[prop] = [];
                 
                 var pattern = pkg.package[prop];
                 if (pattern) {
