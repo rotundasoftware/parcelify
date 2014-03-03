@@ -32,7 +32,8 @@ module.exports = function (b, opts, cb) {
             var parcelDirectory = null;
 
             self.on('package', function(pkg) {
-                if(pkg.isParcel) parcelDirectory = path.join(opts.dst, pkg.id);
+                if(pkg.isParcel) parcelDirectory = path.join(opts.dst, pkg.id); // make a note of where the top level parcel output dir is so we can write assets.json
+
                 if (-- pending === 0) {
                     var assetsJsonPath = path.join(parcelDirectory, 'assets.json');
                     fs.writeFile(assetsJsonPath, JSON.stringify(assetsJson, null, 4), function(err) {
