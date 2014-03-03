@@ -28,26 +28,47 @@ module.exports = function (b, opts, cb) {
             
             var keys = Object.keys(packages);
             var pending = keys.length;
+            var assetsJson = { "script" : [], "style" : [] };
+            var parcelDirectory = null;
+
+            self.on('package', function(pkg) {
+                if(pkg.isParcel) parcelDirectory = path.join(opts.dst, pkg.id);
+                if (-- pending === 0) {
+                    var assetsJsonPath = path.join(parcelDirectory, 'assets.json');
+                    fs.writeFile(assetsJsonPath, JSON.stringify(assetsJson, null, 4), function(err) {
+                        if (err) return self.emit('error', err);
+                        else self.emit('done');
+                    });
+                }
+            });
+
             keys.forEach(function (key) {
-                onpackage(packages[key], function (err) {
-                    if (err) return self.emit('error', err);
-                    if (-- pending === 0) self.emit('done');
-                });
+                dopackage(packages[key], assetsJson );
             });
         });
         ostream = b.bundle().pipe(through2());
     });
     return self;
     
-    function onpackage (pkg, cb) {
+    function dopackage (pkg, assetsJson) {
         var p = new Package(pkg);
-        var ws = p.writeFiles(path.join(opts.dst, pkg.id), function (err) {
-            if (err) self.emit('error', err)
-            else self.emit('done')
+
+        p.on('bundle.js', function(dstjs) {
+            assetsJson.script.push(dstjs);
         });
+
+        p.on('bundle.css', function(dstcss) {
+            assetsJson.style.push(dstcss);
+        });
+
+        var ws = p.writeFiles(path.join(opts.dst, pkg.id), function (err) {
+            if (err) return self.emit('error', err);
+
+            self.emit('package', pkg);
+        });
+
         pkg.isParcel = p.isParcelOf(b);
         if (pkg.isParcel) ostream.pipe(ws);
-        self.emit('package', pkg);
     }
 };
 
