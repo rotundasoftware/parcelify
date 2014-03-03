@@ -44,22 +44,22 @@ module.exports = function (b, opts, cb) {
             });
 
             keys.forEach(function (key) {
-                dopackage(packages[key], assetsJson );
+                dopackage(packages[key], assetsJson, opts.dst );
             });
         });
         ostream = b.bundle().pipe(through2());
     });
     return self;
     
-    function dopackage (pkg, assetsJson) {
+    function dopackage (pkg, assetsJson, dst) {
         var p = new Package(pkg);
 
         p.on('bundle.js', function(dstjs) {
-            assetsJson.script.push(dstjs);
+            assetsJson.script.push(path.relative(dst, dstjs));
         });
 
         p.on('bundle.css', function(dstcss) {
-            assetsJson.style.push(dstcss);
+            assetsJson.style.push(path.relative(dst, dstcss));
         });
 
         var ws = p.writeFiles(path.join(opts.dst, pkg.id), function (err) {
