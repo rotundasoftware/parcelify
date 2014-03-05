@@ -21,7 +21,6 @@ module.exports = function( mainPath, options, callback ) {
     var self = new EventEmitter();
     var ostream;
     var browerifyInstance = browserify( mainPath );
-    var rootAssetsDirectoryPath = options.dst;
 
     options = _.defaults( {}, options, {
         keys : [],
@@ -29,9 +28,14 @@ module.exports = function( mainPath, options, callback ) {
         applyPostprocessors : true
     } );
 
+    if( ! options.dst ) callback( new Error( 'Destination directory must be defined.' ) );
+
+    var rootAssetsDirectoryPath = options.dst;
     var assetTypes = options.keys;
 
-    mkdirp( rootAssetsDirectoryPath, function() {
+    mkdirp( rootAssetsDirectoryPath, function( err ) {
+        if( err ) return callback( err );
+
         parcelMap( browerifyInstance, { keys : assetTypes }, function( err, map ) {
             if( err ) return callback( err );
 
@@ -75,6 +79,21 @@ module.exports = function( mainPath, options, callback ) {
                         var assetTypesToWriteToDisk = _.clone( assetTypes );
 
                         if( options.concatinateCss ) {
+                            // since we are concatenating css into a bundle we do not need to write the individual css files
+                            assetTypesToWriteToDisk = _.without( assetTypesToWriteToDisk, 'style' );
+                        }
+
+                        // go through all our packages, and all the assets in each package, and hook up the stream for 
+                        // the assets to a writable file stream at the asset's destination path.
+                        sortedPackageIds.forEach( function( thisPackageId ) {
+                            assetTypesToWriteToDisk.forEach( function( thisAssetType ) {
+                                packageManifest[ thisPackageId ].outAssetsByType[ thisAssetType ].forEach( function( thisAsset ) {
+                                    thisAsset.stream.pipe( fs.createWriteStream( thisAsset.dstPath ) );
+                                } );
+                            } );
+                        } );
+
+                        if( options.concatinateCss ) {
                             var cssStreamsToBundle = sortedPackageIds.reduce( function( memo, thisPackageId ) {
                                 var cssStreamsThisPackage = _.pluck( packageManifest[ thisPackageId ].outAssetsByType.style, 'stream' );
                                 return memo.concat( cssStreamsThisPackage || [] );
@@ -85,22 +104,11 @@ module.exports = function( mainPath, options, callback ) {
                                 assetsJsonContent.style.push( cssBundlePath );
                                 nextParallel();
                             } );
-                            
-                            // since we are concatenating css into a bundle we do not need to write the individual css files
-                            assetTypesToWriteToDisk = _.without( assetTypesToWriteToDisk, 'style' );
                         }
-                        
-                        // go through all our packages, and all the assets in each package, and hook up the stream for 
-                        // the assets to a writable file stream at the asset's destination path.
-                        sortedPackageIds.forEach( function( thisPackageId ) {
-                            assetTypesToWriteToDisk.forEach( function( thisAssetType ) {
-                                packageManifest[ thisPackageId ].outAssetsByType[ thisAssetType ].forEach( function( thisAsset ) {
-                                    thisAsset.stream.pipe( fs.createWriteStream( thisAsset.dstPath ) );
-                                } );
-                            } );
-                        } );
+                        else nextParallel();
                     } ], nextSeries );
                 }, function( nextSeries ) {
+
                     // all assets are written to disk, transformed, bundled and post-processed. All we have to do now is write our assets.json
                     // so the hook can find them at run-time.
 
@@ -209,10 +217,12 @@ function writeCssBundle( destDir, destFilePrefix, styleStreams, callback ) {
 
     async.series( [ function( nextSeries ) {
         // pipe all our style streams to the css bundle in order
+
         async.eachSeries( styleStreams, function( thisStyleStream, nextStyleStream ) {
             thisStyleStream.pipe( cssBundle, { end : false } );
             thisStyleStream.on( 'end', nextStyleStream );
         }, function( err ) {
+
              if( err ) return nextSeries( err );
 
              cssBundle.end();
@@ -255,6 +265,8 @@ function getSortedPackageIds( topParcelId, packageManifest ) {
     }
 
     var edges = getEdgesForPackageDependencyGraph( topParcelId, packageManifest );
-    return toposort( edges ).reverse();
+    var sortedPackageIds = toposort( edges ).reverse();
+
+    return _.union( sortedPackageIds, Object.keys( packageManifest ) ); // some packages have no dependencies!
 }
 
