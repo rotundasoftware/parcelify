@@ -11,6 +11,7 @@ var async = require('async');
 var crypto = require('crypto');
 var concat = require('concat-stream');
 var glob = require( 'glob' );
+var toposort = require( "toposort" );
 
 var fs = require('fs');
 var EventEmitter = require('events').EventEmitter;
@@ -40,50 +41,59 @@ module.exports = function( mainPath, options, callback ) {
                 thisParcel.isParcel = true;
 
                 var parcelOutputDirPath = path.join( rootAssetsDirectoryPath, thisParcel.id );
-                var tempJsBundlePath = path.join( parcelOutputDirPath, '.bundle_temp.js' );
                 var assetsJsonPath = path.join( parcelOutputDirPath, 'assets.json' );
                 var assetsJsonContent = { 'script' : [], 'style' : [] };
-                var jsBundleShasum, cssBundleShasum;
+                var sortedPackageIds = getSortedPackageIds( thisParcel.id, packageManifest );
 
                 async.series( [ function( nextSeries ) {
                     // go through all the packages returned by parcel-map and copy each one to its own directory in the root assets directory
-                    async.each( _.values( packageManifest ), function( thisPackage, nextEach ) {
+
+                    async.eachSeries( sortedPackageIds, function( thisPackageId, nextPackageId ) {
+                        var thisPackage = packageManifest[ thisPackageId ];
                         var p = new Package( thisPackage );
 
-                        p.writeFiles( path.join( rootAssetsDirectoryPath, thisPackage.id ), { concatinateCss : options.concatinateCss }, function( err, cssFilePaths ) {
-                            if( err ) return nextEach( err );
+                        p.writeFiles( path.join( rootAssetsDirectoryPath, thisPackage.id ), function( err, outAssetsByType ) {
+                            if( err ) return nextPackageId( err );
 
-                            assetsJsonContent.style = assetsJsonContent.style.concat( cssFilePaths );
+                            thisPackage.outAssetsByType = outAssetsByType;
 
-                            return nextEach();
+                            assetsJsonContent.style = assetsJsonContent.style.concat( _.pluck( outAssetsByType.style, 'dstPath' ) );
+
+                            return nextPackageId();
                         } );
                     }, nextSeries );
                 }, function( nextSeries ) {
-                    var jsBundle = through2();
-
-                    ostream.pipe( jsBundle );
-                    
-                    // pipe our js bundle output to both a temporary file and crypto at the same time. need
-                    // the temporary file in order to empty the output, or something? not really sure.
+                    // we are done copying packages and collecting our asset streams. Now write our bundles to disk.
                     async.parallel( [ function( nextParallel ) {
-                        jsBundle.pipe( crypto.createHash( 'sha1' ) ).pipe( concat( function( buf ) {
-                            jsBundleShasum = buf.toString( 'hex' );
+                        writeJsBundle( parcelOutputDirPath, path.basename( thisParcel.path ), ostream, function( err, jsBundlePath ) {
+                            assetsJsonContent.script.push( jsBundlePath );
                             nextParallel();
-                        } ) );
+                        } );
                     }, function( nextParallel ) {
-                        jsBundle.pipe( fs.createWriteStream( tempJsBundlePath ) ).on( 'close', nextParallel );
+                        if( options.concatinateCss ) {
+                            var cssStreamsToBundle = sortedPackageIds.reduce( function( memo, thisPackageId ) {
+                                var cssStreamsThisPackage = _.pluck( packageManifest[ thisPackageId ].outAssetsByType.style, 'stream' );
+                                return memo.concat( cssStreamsThisPackage || [] );
+                            }, [] );
+
+                            writeCssBundle( parcelOutputDirPath, path.basename( thisParcel.path ), cssStreamsToBundle, function( err, cssBundlePath ) {
+                                assetsJsonContent.style = [];
+                                assetsJsonContent.style.push( cssBundlePath );
+                                nextParallel();
+                            } );
+                        } else {
+                            sortedPackageIds.forEach( function( thisPackageId ) {
+                                var cssAssetsThisPackage = packageManifest[ thisPackageId ].outAssetsByType.style;
+                                cssAssetsThisPackage.forEach( function( thisAsset ) {
+                                    thisAsset.stream.pipe( fs.createWriteStream( thisAsset.dstPath ) );
+                                } );
+                            } );
+                        }
                     } ], nextSeries );
                 }, function( nextSeries ) {
-                    // now we have calculated the shasum, so we can write the final file that has the shasum in its name
-                    var destJsBundlePath = path.join( parcelOutputDirPath, path.basename( thisParcel.path ) + '_bundle_' + jsBundleShasum + '.js' );
-                    fs.rename( tempJsBundlePath, destJsBundlePath, function( err ) {
-                        if( err ) return nextSeries( err );
+                    // all assets are written to disk, transformed, bundled and post-processed. All we have to do now is write our assets.json
+                    // so the hook can find them at run-time.
 
-                        assetsJsonContent.script.push( path.relative( rootAssetsDirectoryPath, destJsBundlePath ) );
-                        nextSeries();
-                    } );
-                }, function( nextSeries ) {
-                    // we have all the assets now, so write dat shit to the assets.json
                     fs.writeFile( assetsJsonPath, JSON.stringify( assetsJsonContent, null, 4 ), function( err ) {
                         if( err ) return nextSeries( err );
                         
@@ -152,3 +162,89 @@ function makePackageRegistryFromParcelMap( map, assetTypes, callback ) {
         return callback( null, packageManifest );
     } );
 }
+
+function writeJsBundle( destDir, destFilePrefix, jsStream, callback ) {
+    var jsBundle = through2();
+    var tempJsBundlePath = path.join( destDir, '.bundle_temp.js' );
+    var jsBundleShasum;
+
+    jsStream.pipe( jsBundle );
+    
+    // pipe the bundle output to both a temporary file and crypto at the same time. need
+    // the temporary file in order to empty the output, or something? not really sure.
+    async.parallel( [ function( nextParallel ) {
+        jsBundle.pipe( crypto.createHash( 'sha1' ) ).pipe( concat( function( buf ) {
+            jsBundleShasum = buf.toString( 'hex' );
+            nextParallel();
+        } ) );
+    }, function( nextParallel ) {
+        jsBundle.pipe( fs.createWriteStream( tempJsBundlePath ) ).on( 'close', nextParallel );
+    } ], function( err ) {
+        if( err ) return callback( err );
+
+        var destJsBundlePath = path.join( destDir, destFilePrefix + '_bundle_' + jsBundleShasum + '.js' );
+        fs.rename( tempJsBundlePath, destJsBundlePath, function( err ) {
+            if( err ) return callback( err );
+
+            callback( null, destJsBundlePath );
+        } );
+    } );
+}
+
+function writeCssBundle( destDir, destFilePrefix, styleStreams, callback ) {
+    var cssBundle = through2();
+    var cssBundleShasum;
+    var tempCssBundlePath = path.join( destDir, '.bundle_temp.css' );
+    var destCssBundlePath;
+
+    async.series( [ function( nextSeries ) {
+        var pending = styleStreams.length;
+        styleStreams.forEach( function( thisStyleStream ) {
+            thisStyleStream.pipe( cssBundle, { end : false } );
+            thisStyleStream.on( 'end', function() {
+                if( --pending === 0 )
+                    nextSeries();
+            } );
+        } );
+    }, function( nextSeries ) {
+        cssBundle.end();
+
+        // pipe our bundle output to both a temporary file and crypto at the same time. need
+        // the temporary file in order to empty the output, or something? not really sure.
+        async.parallel( [ function( nextParallel ) {
+            cssBundle.pipe( crypto.createHash( 'sha1' ) ).pipe( concat( function( buf ) {
+                cssBundleShasum = buf.toString( 'hex' );
+                nextParallel();
+            } ) );
+        }, function( nextParallel ) {
+            cssBundle.pipe( fs.createWriteStream( tempCssBundlePath ) ).on( 'close', nextParallel );
+        } ], nextSeries );
+
+    }, function( nextSeries ) {
+       
+        // now we have calculated the shasum, so we can write the final file that has the shasum in its name
+        destCssBundlePath = path.join( destDir, destFilePrefix + '_bundle_' + cssBundleShasum + '.css' );
+        fs.rename( tempCssBundlePath, destCssBundlePath, function( err ) {
+            if( err ) return nextSeries( err );
+            
+            nextSeries();
+        } );
+    } ], function( err ) {
+        if( err ) return callback( err );
+
+        return callback( null, destCssBundlePath );
+    } );
+}
+
+function getSortedPackageIds( topParcelId, packageManifest ) {
+
+    function getEdgesForPackageDependencyGraph( packageId, packageManifest ) {
+        return packageManifest[ packageId ].dependencies.reduce( function( edges, dependentPackageId ) {
+            return edges.concat( [ [ packageId, dependentPackageId ] ] ).concat( getEdgesForPackageDependencyGraph( dependentPackageId, packageManifest ) );
+        }, [] );
+    }
+
+    var edges = getEdgesForPackageDependencyGraph( topParcelId, packageManifest );
+    return toposort( edges ).reverse();
+}
+
