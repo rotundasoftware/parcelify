@@ -17,9 +17,9 @@ test('page1', function (t) {
     p.on('done', function () {
         t.deepEqual(
             fs.readdirSync(dst).sort(),
-            [ '7442ea5e6dcd093d10c0fd9f12a05270f61ab310' ]
+            [ '9080c80726d3c57778c8d6f958b20a68fd87c803' ]
         );
-        var dir = path.join(dst, '7442ea5e6dcd093d10c0fd9f12a05270f61ab310');
+        var dir = path.join(dst, '9080c80726d3c57778c8d6f958b20a68fd87c803');
         t.deepEqual(fs.readdirSync(dir).sort(), [
             'bundle_0410bd9e41e2f1c21f670d3492f250c8f070eb3f.css',
             'bundle_bd37f2061a35a1fed52946ae31e4227d61c9eb4d.js',
@@ -39,9 +39,9 @@ test('page2', function (t) {
     p.on('done', function () {
         t.deepEqual(
             fs.readdirSync(dst).sort(),
-            [ 'bc9bc70a0d79d0822fa31e1be58fff93571931f8' ]
+            [ 'c030c36ffcadcf41c1025490122ec7f3605092ac' ]
         );
-        var dir = path.join(dst, 'bc9bc70a0d79d0822fa31e1be58fff93571931f8');
+        var dir = path.join(dst, 'c030c36ffcadcf41c1025490122ec7f3605092ac');
         t.deepEqual(fs.readdirSync(dir).sort(), [
             'bundle_a6b58d4fadf4e84564f330dcb35494db7098f0b7.js',
             'bundle_da39a3ee5e6b4b0d3255bfef95601890afd80709.css',

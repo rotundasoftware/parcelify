@@ -5,13 +5,16 @@
   "main": "index.js",
   "dependencies": {
     "concat-stream": "~1.4.1",
-    "minimatch": "~0.2.14",
     "mkdirp": "~0.3.5",
     "through2": "~0.4.1",
     "package-writer": "~0.1.0",
     "parcel-map": "~1.0.1",
     "shasum": "~1.0.0",
-    "inherits": "~2.0.1"
+    "browserify": "~3.30.2",
+    "inherits": "~2.0.1",
+    "underscore": "~1.6.0",
+    "async": "~0.2.10",
+    "glob": "~3.2.9"
   },
   "devDependencies": {
     "tape": "~2.3.2",
