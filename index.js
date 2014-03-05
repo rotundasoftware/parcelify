@@ -29,11 +29,13 @@ module.exports = function( mainPath, options, callback ) {
         applyPostprocessors : true
     } );
 
+    var assetTypes = options.keys;
+
     mkdirp( rootAssetsDirectoryPath, function() {
-        parcelMap( browerifyInstance, { keys : options.keys }, function( err, map ) {
+        parcelMap( browerifyInstance, { keys : assetTypes }, function( err, map ) {
             if( err ) return callback( err );
 
-            makePackageRegistryFromParcelMap( map, options.keys, function( err, packageManifest ) {
+            makePackageRegistryFromParcelMap( map, assetTypes, function( err, packageManifest ) {
                 var thisParcelDirPath = path.dirname( mainPath );
                 var thisParcel = _.findWhere( packageManifest, { path : thisParcelDirPath } );
                 if( ! thisParcel ) return callback( new Error( 'Could not locate this parcel in parcel map.' ) );
@@ -70,6 +72,8 @@ module.exports = function( mainPath, options, callback ) {
                             nextParallel();
                         } );
                     }, function( nextParallel ) {
+                        var assetTypesToWriteToDisk = _.clone( assetTypes );
+
                         if( options.concatinateCss ) {
                             var cssStreamsToBundle = sortedPackageIds.reduce( function( memo, thisPackageId ) {
                                 var cssStreamsThisPackage = _.pluck( packageManifest[ thisPackageId ].outAssetsByType.style, 'stream' );
@@ -81,14 +85,20 @@ module.exports = function( mainPath, options, callback ) {
                                 assetsJsonContent.style.push( cssBundlePath );
                                 nextParallel();
                             } );
-                        } else {
-                            sortedPackageIds.forEach( function( thisPackageId ) {
-                                var cssAssetsThisPackage = packageManifest[ thisPackageId ].outAssetsByType.style;
-                                cssAssetsThisPackage.forEach( function( thisAsset ) {
+                            
+                            // since we are concatenating css into a bundle we do not need to write the individual css files
+                            assetTypesToWriteToDisk = _.without( assetTypesToWriteToDisk, 'style' );
+                        }
+                        
+                        // go through all our packages, and all the assets in each package, and hook up the stream for 
+                        // the assets to a writable file stream at the asset's destination path.
+                        sortedPackageIds.forEach( function( thisPackageId ) {
+                            assetTypesToWriteToDisk.forEach( function( thisAssetType ) {
+                                packageManifest[ thisPackageId ].outAssetsByType[ thisAssetType ].forEach( function( thisAsset ) {
                                     thisAsset.stream.pipe( fs.createWriteStream( thisAsset.dstPath ) );
                                 } );
                             } );
-                        }
+                        } );
                     } ], nextSeries );
                 }, function( nextSeries ) {
                     // all assets are written to disk, transformed, bundled and post-processed. All we have to do now is write our assets.json
@@ -198,18 +208,18 @@ function writeCssBundle( destDir, destFilePrefix, styleStreams, callback ) {
     var destCssBundlePath;
 
     async.series( [ function( nextSeries ) {
-        var pending = styleStreams.length;
-        styleStreams.forEach( function( thisStyleStream ) {
+        // pipe all our style streams to the css bundle in order
+        async.eachSeries( styleStreams, function( thisStyleStream, nextStyleStream ) {
             thisStyleStream.pipe( cssBundle, { end : false } );
-            thisStyleStream.on( 'end', function() {
-                if( --pending === 0 )
-                    nextSeries();
-            } );
+            thisStyleStream.on( 'end', nextStyleStream );
+        }, function( err ) {
+             if( err ) return nextSeries( err );
+
+             cssBundle.end();
+             nextSeries();
         } );
     }, function( nextSeries ) {
-        cssBundle.end();
-
-        // pipe our bundle output to both a temporary file and crypto at the same time. need
+        // pipe our bundle to both a temporary file and crypto at the same time. need
         // the temporary file in order to empty the output, or something? not really sure.
         async.parallel( [ function( nextParallel ) {
             cssBundle.pipe( crypto.createHash( 'sha1' ) ).pipe( concat( function( buf ) {
