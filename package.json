@@ -7,7 +7,6 @@
     "concat-stream": "~1.4.1",
     "mkdirp": "~0.3.5",
     "through2": "~0.4.1",
-    "package-writer": "~0.1.0",
     "parcel-map": "~1.0.1",
     "shasum": "~1.0.0",
     "browserify": "~3.30.2",
@@ -15,7 +14,11 @@
     "underscore": "~1.6.0",
     "async": "~0.2.10",
     "glob": "~3.2.9",
-    "toposort": "~0.2.10"
+    "toposort": "~0.2.10",
+    "watchify": "~0.6.1",
+    "globwatcher": "~1.2.2",
+    "resolve": "~0.6.1",
+    "stream-combiner": "0.0.4"
   },
   "devDependencies": {
     "tape": "~2.3.2",
