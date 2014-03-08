@@ -1,10 +1,9 @@
 {
-  "name": "parcel-processor",
-  "version": "1.1.1",
-  "description": "write asset files to a package directry given an entry point",
+  "name": "parcelify",
+  "version": "1.2.1",
+  "description": "Output css bundles from npm modules",
   "main": "index.js",
   "dependencies": {
-    "concat-stream": "~1.4.1",
     "mkdirp": "~0.3.5",
     "through2": "~0.4.1",
     "parcel-map": "~1.0.1",
@@ -21,20 +20,22 @@
     "stream-combiner": "0.0.4"
   },
   "devDependencies": {
-    "tape": "~2.3.2",
-    "browserify": "~3.30.2"
+    "tape": "~2.3.2"
   },
   "scripts": {
     "test": "tape test/*.js"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/rotundasoftware/parcel-processor.git"
+    "url": "git://github.com/rotundasoftware/parcelify.git"
   },
-  "homepage": "https://github.com/rotundasoftware/parcel-processor",
+  "homepage": "https://github.com/rotundasoftware/parcelify",
   "keywords": [
     "parcel",
-    "asset"
+    "asset",
+    "css",
+    "commonjs",
+    "browserify"
   ],
   "author": {
     "name": "Rotunda Software",
@@ -43,7 +44,7 @@
   "licenses": [
     {
       "type": "MIT",
-      "url": "https://github.com/rotundasoftware/parcel-processor/blob/master/LICENSE"
+      "url": "https://github.com/rotundasoftware/parcelify/blob/master/LICENSE"
     }
   ]
 }
