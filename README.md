@@ -1,7 +1,7 @@
 
 # Parcelify
 
-Parcelify is a wrapper around browserify that allows you to create bundles of css from style assets in npm modules.
+Parcelify is a browserify wrapper that allows you to create bundles of css from style assets in npm modules.
 
 ## How dat work?
 
