@@ -1,7 +1,7 @@
 
 # Parcelify
 
-Don't you wish you could bundle css and client side templates in npm modules? Parcelify is a wrapper around James Halliday's browserify that allows you to do just that.
+Parcelify is a wrapper around James Halliday's browserify that allows you to create bundles of css from style assets in npm modules.
 
 ## How dat work?
 
@@ -14,11 +14,11 @@ Don't you wish you could bundle css and client side templates in npm modules? Pa
 └── main.js
 ```
 
-In package.json,
+In my-module's package.json,
 
 ```
 {
-	"style" : "myModule.css"
+	"style" : "*.css"
 }
 ```
 
@@ -34,12 +34,12 @@ Now
 
 ```
 $ npm install parcelify
-$ parcelify index.js -j bundle.js -c bundle.css
+$ parcelify main.js -j bundle.js -c bundle.css
 ```
 
-Now bundle.css contains all the styles that correspond to the index.js entry point, and bundle.js is browserify's output.
+Now bundle.css contains all the styles that correspond to the main.js entry point, and bundle.js is browserify's output.
 
-## Usage
+## Command line usage
 
 ```
 parcelify mainFile.js [options]
@@ -47,19 +47,31 @@ parcelify mainFile.js [options]
 
 Standard Options:
 
-    --jsBundle, -j  Path of the javascript bundle, which is the exact same bundle as produced by browserify.
-                    If unspecified, no javscript bundle is created.
+    --jsBundle, -j    Path of the javascript bundle. If unspecified, no javscript bundle is output.
+                    
+    --cssBundle, -c   Path of the style bundle. If unspecified, no css bundle is output.
 
-    --cssBundle, -c  Path of the style bundle. If unspecified, no css bundle is created.
-
-    --tmplBundle, -t  Path of the template bundle. Templates may be specified in the exact same way as styles, just using a `template` key in `package.json` instead of a `style` key.
+    --tmplBundle, -t  Path of the template bundle. If unspecified, no template bundle is output. Template
+                      assets are specified in the exact same way as style assets, just using a
+                      template key in package.json instead of a `style` key.
    
-       --watch, -w  Watch mode. When watch mode is on, bundles are automatically rebuild as appropriate for changes.
+    --watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.
     
-       --debug -d  Enable source maps that allow you to debug your js files
-                   separately. (Passed through to browserify.)
+    --debug, -d       Enable source maps that allow you to debug your js files separately.
+                      (Passed through directly to browserify.)
 
-       --help, -h  Show this message
+    --help, -h        Show this message
+
+## package.json
+
+Several keys are introcued in package.json files.
+
+The `style` key is a glob or array of globs that describe the style assets of the module.
+
+The `template` key is the same as the `style` key, just for templates.
+
+## Contributors
+
 
 ## License
 

@@ -1,7 +1,7 @@
 {
   "name": "parcelify",
   "version": "1.2.1",
-  "description": "Output css bundles from npm modules",
+  "description": "Bundle css and client side templates in npm modules",
   "main": "index.js",
   "dependencies": {
     "mkdirp": "~0.3.5",
