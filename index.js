@@ -36,24 +36,28 @@ module.exports = function( mainPath, options, callback ) {
 		existingPackages : undefined,
 	} );
 
+	var thisParcel;
 	var browerifyInstance = options.watch ? watchify( mainPath ) : browserify( mainPath );
+	var existingPackages = options.existingPackages || {};
 
-	// if( options.watch ) {
-		// browerifyInstance.on( 'update', function( changedMains )  {
-		// 	async.each( changedMains, function( thisMain, nextEach ) {
-		// 		processParcel( thisMain, browerifyInstance, options )
-				
-		// 		console.log( 'updated ' + thisMain );
-		// 		nextEach();
-		// 	}, function( err ) {
-		// 		if( err ) return callback( err );
+	if( options.watch ) {
+		browerifyInstance.on( 'update', _.debounce( function( changedMains ) {
+			if( _.contains( changedMains, thisParcel.mainPath ) ) { // I think this should always be the case
+				var newOptions = _.clone( options );
+				newOptions.existingPackages = existingPackages;
 
-		// 		// next tick...
-		// 	} );
-		// } );
-	// }
+				processParcel( thisParcel.mainPath, browerifyInstance, newOptions, function( err, parcel, packagesCreated ) {
+					thisParcel = parcel;
+					_.extend( existingPackages, packagesCreated );
+				} );
+			}
+		}, 1000, true ) );
+	}
 
-	processParcel( mainPath, browerifyInstance, options, function( err, parcel ) {
+	processParcel( mainPath, browerifyInstance, options, function( err, parcel, packagesCreated ) {
+		thisParcel = parcel;
+		_.extend( existingPackages, packagesCreated );
+
 		callback( err, parcel );
 	} );
 };
@@ -63,7 +67,6 @@ function processParcel( mainPath, browerifyInstance, options, callback ) {
 
 	var existingPackages = options.existingPackages || {};
 	var assetTypes = Object.keys( options.bundles );
-	var concatinateCss = options.bundleMode || options.concatinateCss;
 
 	parcelMap( browerifyInstance, { keys : assetTypes }, function( err, parcelMap ) {
 		if( err ) return callback( err );
@@ -72,6 +75,7 @@ function processParcel( mainPath, browerifyInstance, options, callback ) {
 			
 			process.nextTick( function() {
 				async.series( [ function( nextSeries ) {
+					// fire package events for any new packages
 					_.each( packagesThatWereCreated, function( thisPackage ) { thisParcel.emit( 'package', thisPackage ); } );
 
 					nextSeries();
@@ -83,20 +87,22 @@ function processParcel( mainPath, browerifyInstance, options, callback ) {
 						thisParcel.writeBundle( thisAssetType, options.bundles[ thisAssetType ], nextEach );
 					}, nextSeries );
 				}, function( nextSeries ) {
+					var thisParcelIsNew = _.contains( packagesThatWereCreated, thisParcel );
+
 					if( options.watch ) {
 						// we only create glob watchers for the packages that parcel added to the manifest. Again, we want to avoid doubling up
 						// work in situations where we have multiple parcelify instances running that share common bundles
-						_.each( packagesThatWereCreated, function( thisPackage ) { thisPackage.createAssetGlobWatchers(); } );
-						thisParcel.attachWatchListeners( options.bundles );
+						_.each( packagesThatWereCreated, function( thisPackage ) { thisPackage.createAssetWatchers(); } );
+						if( thisParcelIsNew ) thisParcel.attachWatchListeners( options.bundles );
 					}
 
-					thisParcel.emit( 'done' );
+					if( thisParcelIsNew ) thisParcel.emit( 'done' );
 
 					nextSeries();
 				} ] );
 			} );
 
-			return callback( null, thisParcel ); // return this parcel to our calling function via the cb
+			return callback( null, thisParcel, packagesThatWereCreated ); // return this parcel to our calling function via the cb
 		} );
 	} );
 	

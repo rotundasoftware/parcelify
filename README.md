@@ -1,7 +1,7 @@
 
 # Parcelify
 
-Don't you wish you could include css and other assets in npm modules? Parcelify is a wrapper around James Halliday's browserify that allows you to easily bundle css and templates using yoru normal commonjs requires.
+Don't you wish you could bundle css and client side templates in npm modules? Parcelify is a wrapper around James Halliday's browserify that allows you to do just that.
 
 ## How dat work?
 
@@ -37,7 +37,7 @@ $ npm install parcelify
 $ parcelify index.js -j bundle.js -c bundle.css
 ```
 
-Now bundle.css contains all the styles that correspond to the index.js entry point.
+Now bundle.css contains all the styles that correspond to the index.js entry point, and bundle.js is browserify's output.
 
 ## Usage
 

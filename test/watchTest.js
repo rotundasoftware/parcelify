@@ -22,6 +22,6 @@ parcelify( mainPath, options, function( err, parcel ) {
 	if( err ) throw err;
 
 	parcel.on( 'done', function() {
-		console.log( 'done' );
+		console.log( 'test-done' );
 	} );
 } );
