@@ -1,7 +1,7 @@
 
 # Parcelify
 
-Parcelify is a wrapper around James Halliday's browserify that allows you to create bundles of css from style assets in npm modules.
+Parcelify is a wrapper around browserify that allows you to create bundles of css from style assets in npm modules.
 
 ## How dat work?
 
@@ -10,15 +10,16 @@ Parcelify is a wrapper around James Halliday's browserify that allows you to cre
 │   └── my-module
 │       ├── index.js
 │       ├── myModule.css
+│       ├── myModule.scss
 │       └── package.json
 └── main.js
 ```
 
-In my-module's package.json,
+In my-module's package.json, the module's style assets are enumerated using glob notation:
 
 ```
 {
-	"style" : "*.css"
+	"style" : [ "*.css" ]
 }
 ```
 
@@ -30,10 +31,9 @@ myModule = require( 'my-module' );
 console.log( 'hello world' );
 ```
 
-Now
+To run parcelify from the command line,
 
 ```
-$ npm install parcelify
 $ parcelify main.js -j bundle.js -c bundle.css
 ```
 
@@ -68,10 +68,15 @@ Several keys are introcued in package.json files.
 
 The `style` key is a glob or array of globs that describe the style assets of the module.
 
-The `template` key is the same as the `style` key, just for templates.
+The `template` key is the same as the `style` key, just for templates instead of styles.
+
+The `tranforms` key is an array of names or file paths of [transform modules](https://github.com/substack/module-deps#transforms) to be applied to assets.
 
 ## Contributors
 
+* [James Halliday](https://twitter.com/substack)
+* [David Beck](https://twitter.com/davegbeck)
+* [Oleg Seletsky](https://github.com/go-oleg)
 
 ## License
 

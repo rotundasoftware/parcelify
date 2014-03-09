@@ -18,6 +18,7 @@ var Package = require('./lib/package.js');
 
 module.exports = function( mainPath, options, callback ) {
 	if( arguments.length === 2 ) {
+		// options argument is optional
 		callback = options;
 		options = {};
 	}
@@ -31,13 +32,14 @@ module.exports = function( mainPath, options, callback ) {
 
 		watch : false,
 		packageTransform : undefined,
+		browserifyInstance : undefined,
 
-		// can be used to share packages between multiple parcelify instances
-		existingPackages : undefined,
+		// used internally or in order to share packages between multiple parcelify instances
+		existingPackages : undefined
 	} );
 
 	var thisParcel;
-	var browerifyInstance = options.watch ? watchify( mainPath ) : browserify( mainPath );
+	var browerifyInstance = options.browserifyInstance || ( options.watch ? watchify( mainPath ) : browserify( mainPath ) );
 	var existingPackages = options.existingPackages || {};
 
 	if( options.watch ) {
