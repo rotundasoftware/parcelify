@@ -217,13 +217,22 @@ function getPackageOptionsFromPackageJson( packageId, packageJson, assetTypes, c
 			// resolve transform names to actual tranforms
 			packageOptions.assetTransformsByType[ thisAssetType ] = [];
 
-			transformsByType = packageJson.transforms ? packageJson.transforms : {};
-			transformNames = transformsByType[ thisAssetType ] || [];
+			if( packageJson.transforms ) {
+				if( _.isArray( packageJson.transforms ) )
+					transformNames = packageJson.transforms;
+				else
+					transformNames = packageJson.transforms[ thisAssetType ] || [];
+			}
+			else
+				transformNames = [];
+
 			async.map( transformNames, function( thisTransformName, nextTransform ) {
-				resolve.sync( thisTransformName, { basedir : _this.path }, function( err, res ) {
-					if( err ) return nextTransform( err );
+				try {
+					var res = resolve.sync( thisTransformName, { basedir : packageJson.__dirname } );
 					nextTransform( null, require( res ) );
-				} );
+				} catch( e ) {
+					nextTransform( e );
+				}
 			}, function( err, transforms ) {
 				packageOptions.assetTransformsByType[ thisAssetType ] = transforms;
 				nextParallel();
