@@ -73,7 +73,7 @@ function processParcel( mainPath, browerifyInstance, options, callback ) {
 	parcelMap( browerifyInstance, { keys : assetTypes }, function( err, parcelMap ) {
 		if( err ) return callback( err );
 
-		instantiateParcelAndPacakgesFromMap( mainPath, ostream, parcelMap, existingPackages, assetTypes, function( err, thisParcel, packagesThatWereCreated ) {
+		instantiateParcelAndPackagesFromMap( mainPath, ostream, parcelMap, existingPackages, assetTypes, function( err, thisParcel, packagesThatWereCreated ) {
 			
 			process.nextTick( function() {
 				async.series( [ function( nextSeries ) {
@@ -114,7 +114,7 @@ function processParcel( mainPath, browerifyInstance, options, callback ) {
 	} ).pipe( through2() );
 }
 
-function instantiateParcelAndPacakgesFromMap( mainPath, jsBundleStream, parcelMap, existingPacakages, assetTypes, callback ) {
+function instantiateParcelAndPackagesFromMap( mainPath, jsBundleStream, parcelMap, existingPacakages, assetTypes, callback ) {
 	var mappedParcel = null;
 	var packagesThatWereCreated = {};
 	var pathOfMappedParcel = path.dirname( mainPath );
