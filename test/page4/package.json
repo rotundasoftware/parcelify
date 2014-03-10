@@ -2,5 +2,6 @@
   "view": "view.html",
   "main": "main.js",
   "style": "*.scss",
+  "template": "*.tmpl",
   "transforms" : [ "sass-css-stream" ]
 }

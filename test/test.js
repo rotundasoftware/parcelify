@@ -68,7 +68,7 @@ test( 'page2', function( t ) {
 } );
 
 test( 'page4', function( t ) {
-	t.plan( 2 );
+	t.plan( 3 );
 	
 	var mainPath = __dirname + '/page4/main.js';
 	
@@ -76,7 +76,8 @@ test( 'page4', function( t ) {
 	var options = {
 		bundles : {
 			script : path.join( dstDir, 'bundle.js' ),
-			style : path.join( dstDir, 'bundle.css' )
+			style : path.join( dstDir, 'bundle.css' ),
+			template : path.join( dstDir, 'bundle.tmpl' )
 		}
 	};
 
@@ -88,10 +89,11 @@ test( 'page4', function( t ) {
 		parcel.on( 'done', function() {
 			t.deepEqual(
 				fs.readdirSync( dstDir ).sort(),
-				[ 'bundle.css', 'bundle.js' ]
+				[ 'bundle.css', 'bundle.js', 'bundle.tmpl' ]
 			);
 
 			t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h1 {\n\tfont-size: 18px;\n}body h3 {\n  color: red; }\n' );
+			t.deepEqual( fs.readFileSync( options.bundles.template, 'utf8' ), '<script type="template" id="my-module">\n<p>I am a template in myModule.</p>\n</script>\n<script type="template" id="my-template">\n<p>Hello There! I am a template.</p>\n</script>\n' );
 		} );
 	} );
 } );
