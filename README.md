@@ -1,7 +1,12 @@
 
 # Parcelify
 
-Parcelify is a browserify wrapper for creating bundles of css from style assets in npm modules.
+Parcelify is a browserify wrapper that creates a css bundle (and optionally template bundle) from assets in npm modules.
+
+* Uses browserify / js requires to resolve dependencies
+* Supports transforms like sass and less
+* Intelligent watch mode
+* Easy to use command line interface or robust API
 
 ## How dat work?
 
@@ -37,7 +42,7 @@ To run parcelify from the command line,
 $ parcelify main.js -j bundle.js -c bundle.css
 ```
 
-Now bundle.css contains all the styles that correspond to the main.js entry point, and bundle.js is browserify's output.
+Now `bundle.css` contains all the styles that correspond to the `main.js` entry point, and `bundle.js` is browserify's output.
 
 ## Installation
 
@@ -52,8 +57,8 @@ npm install -g parcelify
                 
 --cssBundle, -c   Path of the style bundle. If unspecified, no css bundle is output.
 
---tmplBundle, -t  Parcelify can optionally bundle your client side templates as well. Template 
-                  assets are specified in the exact same way as style assets, just using a 
+--tmplBundle, -t  Path of the template bundle. If unspecified.. you get it. Template assets
+                  are enumerated in the exact same way as style assets, just using a 
                   template key in package.json instead of a `style` key.
 
 --watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.

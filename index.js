@@ -1,12 +1,12 @@
 var path = require('path');
 var browserify = require( 'browserify' );
 var watchify = require( 'watchify' );
-var parcelMap = require('parcel-map');
-var shasum = require('shasum');
-var through2 = require('through2');
-var path = require('path');
-var _ = require('underscore');
-var async = require('async');
+var parcelMap = require( 'parcel-map' );
+var shasum = require( 'shasum' );
+var through2 = require( 'through2' );
+var path = require( 'path' );
+var _ = require( 'underscore' );
+var async = require( 'async' );
 var glob = require( 'glob' );
 var resolve = require( 'resolve' );
 var Package = require( './lib/package' );
@@ -68,7 +68,7 @@ module.exports = function( mainPath, options, callback ) {
 };
 
 function processParcel( mainPath, browerifyInstance, options, callback ) {
-	var ostream;
+	var jsBundleStream;
 
 	var existingPackages = options.existingPackages || {};
 	var assetTypes = Object.keys( options.bundles );
@@ -76,8 +76,11 @@ function processParcel( mainPath, browerifyInstance, options, callback ) {
 	parcelMap( browerifyInstance, { keys : assetTypes }, function( err, parcelMap ) {
 		if( err ) return callback( err );
 
-		instantiateParcelAndPackagesFromMap( mainPath, ostream, parcelMap, existingPackages, assetTypes, function( err, thisParcel, packagesThatWereCreated ) {
-			
+		instantiateParcelAndPackagesFromMap( mainPath, parcelMap, existingPackages, assetTypes, function( err, thisParcel, packagesThatWereCreated ) {
+			if( err ) return callback( err );
+
+			thisParcel.setJsBundleStream( jsBundleStream );
+
 			process.nextTick( function() {
 				async.series( [ function( nextSeries ) {
 					// fire package events for any new packages
@@ -112,13 +115,13 @@ function processParcel( mainPath, browerifyInstance, options, callback ) {
 	} );
 	
 	// get things moving. note we need to do this after parcelMap has been called with the browserify instance
-	ostream = browerifyInstance.bundle( {
+	jsBundleStream = browerifyInstance.bundle( {
 		packageFilter : options.packageTransform,
 		debug : options.debug
 	} ).pipe( through2() );
 }
 
-function instantiateParcelAndPackagesFromMap( mainPath, jsBundleStream, parcelMap, existingPacakages, assetTypes, callback ) {
+function instantiateParcelAndPackagesFromMap( mainPath, parcelMap, existingPacakages, assetTypes, callback ) {
 	var mappedParcel = null;
 	var packagesThatWereCreated = {};
 	var pathOfMappedParcel = path.dirname( mainPath );
@@ -138,7 +141,6 @@ function instantiateParcelAndPackagesFromMap( mainPath, jsBundleStream, parcelMa
 				if( ! existingPacakages[ thisPackageId ] ) {
 					if( packageOptions.isParcel ) {
 						if( thisIsTheTopLevelParcel ) {
-							packageOptions.jsBundleStream = jsBundleStream;
 							packageOptions.mainPath = mainPath;
 						}
 
@@ -178,8 +180,10 @@ function instantiateParcelAndPackagesFromMap( mainPath, jsBundleStream, parcelMa
 		mappedParcel.calcSortedDependencies();
 		mappedParcel.calcParcelAssets( assetTypes );
 
-		return callback( null, mappedParcel, packagesThatWereCreated );
-	} ] );
+		nextSeries();
+	} ], function( err ) {
+		return callback( err, mappedParcel, packagesThatWereCreated );
+	} );
 }
 
 function getPackageOptionsFromPackageJson( packageId, packageJson, assetTypes, callback ) {
@@ -199,6 +203,7 @@ function getPackageOptionsFromPackageJson( packageId, packageJson, assetTypes, c
 	}
 
 	async.each( assetTypes, function( thisAssetType, nextAssetType ) {
+
 		async.parallel( [ function( nextParallel ) {
 			packageOptions.assetSrcPathsByType[ thisAssetType ] = [];
 
@@ -209,13 +214,14 @@ function getPackageOptionsFromPackageJson( packageId, packageJson, assetTypes, c
 			packageOptions.assetGlobsByType[ thisAssetType ] = absoluteGlobsOfThisType;
 
 			// resolve absolute globs to actual src files
-			async.map( absoluteGlobsOfThisType, glob, function( err, arrayOfResolvedGlobs ) {
-				if( err ) return nextAssetType( err );
+			async.map( absoluteGlobsOfThisType, glob,
+			function( err, arrayOfResolvedGlobs ) {
+				if( err ) return nextParallel( err );
 
 				var assetsOfThisType = _.flatten( arrayOfResolvedGlobs );
 				packageOptions.assetSrcPathsByType[ thisAssetType ] = assetsOfThisType;
 
-				nextAssetType();
+				nextParallel();
 			} );
 		}, function( nextParallel ) {
 			// resolve transform names to actual tranforms
@@ -231,13 +237,14 @@ function getPackageOptionsFromPackageJson( packageId, packageJson, assetTypes, c
 				transformNames = [];
 
 			async.map( transformNames, function( thisTransformName, nextTransform ) {
-				try {
-					var res = resolve.sync( thisTransformName, { basedir : packageJson.__dirname } );
-					nextTransform( null, require( res ) );
-				} catch( e ) {
-					nextTransform( e );
-				}
+				resolve( thisTransformName, { basedir : packageJson.__dirname }, function( err, modulePath ) {
+					if( err ) return nextTransform( err );
+
+					nextTransform( null, require( modulePath ) );
+				} );
 			}, function( err, transforms ) {
+				if( err ) return nextParallel( err );
+
 				packageOptions.assetTransformsByType[ thisAssetType ] = transforms;
 				nextParallel();
 			} );

@@ -13,8 +13,6 @@ var tmpdir = (os.tmpdir || os.tmpDir)();
 	
 	var dstDir = path.resolve( tmpdir, 'parcelify-test-' + Math.random() );
 
-	dstDir = 'test-output';
-
 	var options = {
 		bundles : {
 			script : path.join( dstDir, 'bundle.js' ),
