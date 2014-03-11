@@ -1,0 +1,4 @@
+{
+  "view": "render.jade",
+  "style": "**/*.css"
+}

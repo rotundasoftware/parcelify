@@ -1,272 +1,257 @@
-var fs = require('fs');
 var path = require('path');
 var browserify = require( 'browserify' );
-var parcelMap = require('parcel-map');
-var shasum = require('shasum');
-var mkdirp = require('mkdirp');
-var through2 = require('through2');
-var path = require('path');
-var _ = require('underscore');
-var async = require('async');
-var crypto = require('crypto');
-var concat = require('concat-stream');
+var watchify = require( 'watchify' );
+var parcelMap = require( 'parcel-map' );
+var shasum = require( 'shasum' );
+var through2 = require( 'through2' );
+var path = require( 'path' );
+var _ = require( 'underscore' );
+var async = require( 'async' );
 var glob = require( 'glob' );
-var toposort = require( "toposort" );
+var resolve = require( 'resolve' );
+var Package = require( './lib/package' );
+var Parcel = require( './lib/parcel' );
+var resolve = require( 'resolve' );
 
-var fs = require('fs');
 var EventEmitter = require('events').EventEmitter;
 var Package = require('./lib/package.js');
 
 module.exports = function( mainPath, options, callback ) {
-    var self = new EventEmitter();
-    var ostream;
-    var browerifyInstance = browserify( mainPath );
+	if( arguments.length === 2 ) {
+		// options argument is optional
+		callback = options;
+		options = {};
+	}
 
-    options = _.defaults( {}, options, {
-        keys : [],
-        concatinateCss : true,
-        applyPostprocessors : true
-    } );
+	options = _.defaults( {}, options, {
+		bundles : {
+			script : 'bundle.js',
+			style : 'bundle.css',
+			template : 'bundle.tmpl'
+		},
 
-    if( ! options.dst ) callback( new Error( 'Destination directory must be defined.' ) );
+		watch : false,
+		packageTransform : undefined,
+		browserifyInstance : undefined,
 
-    var rootAssetsDirectoryPath = options.dst;
-    var assetTypes = options.keys;
+		// used internally or in order to share packages between multiple parcelify instances
+		existingPackages : undefined,
 
-    mkdirp( rootAssetsDirectoryPath, function( err ) {
-        if( err ) return callback( err );
+		// whether browserify should create source maps
+		debug : false
+	} );
 
-        parcelMap( browerifyInstance, { keys : assetTypes }, function( err, map ) {
-            if( err ) return callback( err );
+	var thisParcel;
+	var browerifyInstance = options.browserifyInstance || ( options.watch ? watchify( mainPath ) : browserify( mainPath ) );
+	var existingPackages = options.existingPackages || {};
 
-            makePackageRegistryFromParcelMap( map, assetTypes, function( err, packageManifest ) {
-                var thisParcelDirPath = path.dirname( mainPath );
-                var thisParcel = _.findWhere( packageManifest, { path : thisParcelDirPath } );
-                if( ! thisParcel ) return callback( new Error( 'Could not locate this parcel in parcel map.' ) );
+	if( options.watch ) {
+		browerifyInstance.on( 'update', _.debounce( function( changedMains ) {
+			if( _.contains( changedMains, thisParcel.mainPath ) ) { // I think this should always be the case
+				var newOptions = _.clone( options );
+				newOptions.existingPackages = existingPackages;
 
-                thisParcel.isParcel = true;
+				processParcel( thisParcel.mainPath, browerifyInstance, newOptions, function( err, parcel, packagesCreated ) {
+					thisParcel = parcel;
+					_.extend( existingPackages, packagesCreated );
+				} );
+			}
+		}, 1000, true ) );
+	}
 
-                var parcelOutputDirPath = path.join( rootAssetsDirectoryPath, thisParcel.id );
-                var assetsJsonPath = path.join( parcelOutputDirPath, 'assets.json' );
-                var assetsJsonContent = { 'script' : [], 'style' : [] };
-                var sortedPackageIds = getSortedPackageIds( thisParcel.id, packageManifest );
+	processParcel( mainPath, browerifyInstance, options, function( err, parcel, packagesCreated ) {
+		thisParcel = parcel;
+		_.extend( existingPackages, packagesCreated );
 
-                async.series( [ function( nextSeries ) {
-                    // go through all the packages returned by parcel-map and copy each one to its own directory in the root assets directory
-
-                    async.eachSeries( sortedPackageIds, function( thisPackageId, nextPackageId ) {
-                        var thisPackage = packageManifest[ thisPackageId ];
-                        var p = new Package( thisPackage );
-
-                        p.writeFiles( path.join( rootAssetsDirectoryPath, thisPackage.id ), function( err, outAssetsByType ) {
-                            if( err ) return nextPackageId( err );
-
-                            thisPackage.outAssetsByType = outAssetsByType;
-
-                            assetsJsonContent.style = assetsJsonContent.style.concat( _.pluck( outAssetsByType.style, 'dstPath' ) );
-
-                            return nextPackageId();
-                        } );
-                    }, nextSeries );
-                }, function( nextSeries ) {
-                    // we are done copying packages and collecting our asset streams. Now write our bundles to disk.
-                    async.parallel( [ function( nextParallel ) {
-                        writeJsBundle( parcelOutputDirPath, path.basename( thisParcel.path ), ostream, function( err, jsBundlePath ) {
-                            assetsJsonContent.script.push( jsBundlePath );
-                            nextParallel();
-                        } );
-                    }, function( nextParallel ) {
-                        var assetTypesToWriteToDisk = _.clone( assetTypes );
-
-                        if( options.concatinateCss ) {
-                            // since we are concatenating css into a bundle we do not need to write the individual css files
-                            assetTypesToWriteToDisk = _.without( assetTypesToWriteToDisk, 'style' );
-                        }
-
-                        // go through all our packages, and all the assets in each package, and hook up the stream for 
-                        // the assets to a writable file stream at the asset's destination path.
-                        sortedPackageIds.forEach( function( thisPackageId ) {
-                            assetTypesToWriteToDisk.forEach( function( thisAssetType ) {
-                                packageManifest[ thisPackageId ].outAssetsByType[ thisAssetType ].forEach( function( thisAsset ) {
-                                    thisAsset.stream.pipe( fs.createWriteStream( thisAsset.dstPath ) );
-                                } );
-                            } );
-                        } );
-
-                        if( options.concatinateCss ) {
-                            var cssStreamsToBundle = sortedPackageIds.reduce( function( memo, thisPackageId ) {
-                                var cssStreamsThisPackage = _.pluck( packageManifest[ thisPackageId ].outAssetsByType.style, 'stream' );
-                                return memo.concat( cssStreamsThisPackage || [] );
-                            }, [] );
-
-                            writeCssBundle( parcelOutputDirPath, path.basename( thisParcel.path ), cssStreamsToBundle, function( err, cssBundlePath ) {
-                                assetsJsonContent.style = [];
-                                assetsJsonContent.style.push( cssBundlePath );
-                                nextParallel();
-                            } );
-                        }
-                        else nextParallel();
-                    } ], nextSeries );
-                }, function( nextSeries ) {
-
-                    // all assets are written to disk, transformed, bundled and post-processed. All we have to do now is write our assets.json
-                    // so the hook can find them at run-time.
-
-                    fs.writeFile( assetsJsonPath, JSON.stringify( assetsJsonContent, null, 4 ), function( err ) {
-                        if( err ) return nextSeries( err );
-                        
-                        return nextSeries();
-                    } );
-                } ], function( err ) {
-                    if( err ) return callback( err );
-
-                    callback( null, packageManifest, thisParcel.id );
-                } );
-            } );
-        } );
-        
-        ostream = browerifyInstance.bundle().pipe( through2() );
-    } );
-
-    return self;
+		callback( err, parcel );
+	} );
 };
 
-function makePackageRegistryFromParcelMap( map, assetTypes, callback ) {
-    // parcel map returns a hash of package ids to package json contents.
-    // we want some extra info in there, so we put the package json contents
-    // in its own key and add an assets array to hold all the local assets
-    // for each package.
-    var packageManifest = {};
-    _.each( map.packages, function( thisPackageJson, thisPackageId ) {
-        packageManifest[ thisPackageId ] = {
-            package : thisPackageJson,
-            assets : []
-        };
-    } );
+function processParcel( mainPath, browerifyInstance, options, callback ) {
+	var jsBundleStream;
 
-    _.each( map.assets, function( thisPackageId, thisAssetPath ) {
-        packageManifest[ thisPackageId ].assets.push( thisAssetPath );
-    } );
-    
-    async.each( Object.keys( packageManifest ), function( thisPackageId, nextPackage ) {
-        var thisPackage = packageManifest[ thisPackageId ];
+	var existingPackages = options.existingPackages || {};
+	var assetTypes = Object.keys( options.bundles );
 
-        thisPackage.id = thisPackageId;
-        thisPackage.path = thisPackage.package.__dirname;
-        thisPackage.dependencies = map.dependencies[ thisPackageId ] || [];
-        if( thisPackage.package.view ) {
-            thisPackage.view = path.resolve( thisPackage.path, thisPackage.package.view );
-            thisPackage.isParcel = true;
-        }
+	parcelMap( browerifyInstance, { keys : assetTypes }, function( err, parcelMap ) {
+		if( err ) return callback( err );
 
-        thisPackage.assetsByType = {};
-        async.each( assetTypes, function( thisAssetType, nextAssetType ) {
-            var relativeGlobsOfThisType = thisPackage.package[ thisAssetType ] || [];
-            if( _.isString( relativeGlobsOfThisType ) ) relativeGlobsOfThisType = [ relativeGlobsOfThisType ];
-            var absoluteGlobsOfThisType = relativeGlobsOfThisType.map( function( thisGlob ) { return path.resolve( thisPackage.path, thisGlob ); } );
-            
-            async.map( absoluteGlobsOfThisType, glob, function( err, arrayOfResolvedGlobs ) {
-                if( err ) return nextAssetType( err );
+		instantiateParcelAndPackagesFromMap( mainPath, parcelMap, existingPackages, assetTypes, function( err, thisParcel, packagesThatWereCreated ) {
+			if( err ) return callback( err );
 
-                var assetsOfThisType = _.flatten( arrayOfResolvedGlobs );
-                thisPackage.assetsByType[ thisAssetType ] = assetsOfThisType;
+			thisParcel.setJsBundleStream( jsBundleStream );
 
-                nextAssetType();
-            } );
-        }, nextPackage );
-    }, function( err ) {
-        if( err ) return callback( err );
+			process.nextTick( function() {
+				async.series( [ function( nextSeries ) {
+					// fire package events for any new packages
+					_.each( packagesThatWereCreated, function( thisPackage ) { thisParcel.emit( 'package', thisPackage ); } );
 
-        return callback( null, packageManifest );
-    } );
+					nextSeries();
+				}, function( nextSeries ) {
+					// we are done copying packages and collecting our asset streams. Now write our bundles to disk.
+					async.each( _.union( assetTypes, 'script' ), function( thisAssetType, nextEach ) {
+						if( ! options.bundles[ thisAssetType ] ) return nextEach();
+
+						thisParcel.writeBundle( thisAssetType, options.bundles[ thisAssetType ], nextEach );
+					}, nextSeries );
+				}, function( nextSeries ) {
+					var thisParcelIsNew = _.contains( packagesThatWereCreated, thisParcel );
+
+					if( options.watch ) {
+						// we only create glob watchers for the packages that parcel added to the manifest. Again, we want to avoid doubling up
+						// work in situations where we have multiple parcelify instances running that share common bundles
+						_.each( packagesThatWereCreated, function( thisPackage ) { thisPackage.createAssetWatchers(); } );
+						if( thisParcelIsNew ) thisParcel.attachWatchListeners( options.bundles );
+					}
+
+					if( thisParcelIsNew ) thisParcel.emit( 'done' );
+
+					nextSeries();
+				} ] );
+			} );
+
+			return callback( null, thisParcel, packagesThatWereCreated ); // return this parcel to our calling function via the cb
+		} );
+	} );
+	
+	// get things moving. note we need to do this after parcelMap has been called with the browserify instance
+	jsBundleStream = browerifyInstance.bundle( {
+		packageFilter : options.packageTransform,
+		debug : options.debug
+	} ).pipe( through2() );
 }
 
-function writeJsBundle( destDir, destFilePrefix, jsStream, callback ) {
-    var jsBundle = through2();
-    var tempJsBundlePath = path.join( destDir, '.bundle_temp.js' );
-    var jsBundleShasum;
+function instantiateParcelAndPackagesFromMap( mainPath, parcelMap, existingPacakages, assetTypes, callback ) {
+	var mappedParcel = null;
+	var packagesThatWereCreated = {};
+	var pathOfMappedParcel = path.dirname( mainPath );
+	var thisIsTheTopLevelParcel;
 
-    jsStream.pipe( jsBundle );
-    
-    // pipe the bundle output to both a temporary file and crypto at the same time. need
-    // the temporary file in order to empty the output, or something? not really sure.
-    async.parallel( [ function( nextParallel ) {
-        jsBundle.pipe( crypto.createHash( 'sha1' ) ).pipe( concat( function( buf ) {
-            jsBundleShasum = buf.toString( 'hex' );
-            nextParallel();
-        } ) );
-    }, function( nextParallel ) {
-        jsBundle.pipe( fs.createWriteStream( tempJsBundlePath ) ).on( 'close', nextParallel );
-    } ], function( err ) {
-        if( err ) return callback( err );
+	async.series( [ function( nextSeries ) {
+		async.each( Object.keys( parcelMap.packages ), function( thisPackageId, nextPackageId ) {
+			var packageOptions = {};
 
-        var destJsBundlePath = path.join( destDir, destFilePrefix + '_bundle_' + jsBundleShasum + '.js' );
-        fs.rename( tempJsBundlePath, destJsBundlePath, function( err ) {
-            if( err ) return callback( err );
+			async.waterfall( [ function( nextWaterfall ) {
+				getPackageOptionsFromPackageJson( thisPackageId, parcelMap.packages[ thisPackageId ], assetTypes, nextWaterfall );
+			}, function( packageOptions, nextWaterfall ) {
+				var thisPackage;
 
-            callback( null, destJsBundlePath );
-        } );
-    } );
+				thisIsTheTopLevelParcel = packageOptions.path === pathOfMappedParcel;
+
+				if( ! existingPacakages[ thisPackageId ] ) {
+					if( packageOptions.isParcel ) {
+						if( thisIsTheTopLevelParcel ) {
+							packageOptions.mainPath = mainPath;
+						}
+
+						thisPackage = packagesThatWereCreated[ thisPackageId ] = new Parcel( packageOptions );
+					}
+					else thisPackage = packagesThatWereCreated[ thisPackageId ] = new Package( packageOptions );
+
+					thisPackage.createAllAssets( assetTypes );
+				}
+				else
+					thisPackage = existingPacakages[ thisPackageId ];
+
+				if( thisIsTheTopLevelParcel ) mappedParcel = thisPackage;
+
+				nextWaterfall();
+			} ], nextPackageId );
+		}, nextSeries );
+	}, function( nextSeries ) {
+		if( ! mappedParcel ) return callback( new Error( 'Could not locate this mapped parcel id.' ) );
+
+		var allPackagesRelevantToThisParcel = _.extend( existingPacakages, packagesThatWereCreated );
+
+		// now that we have all our packages instantiated, hook up dependencies
+		_.each( parcelMap.dependencies, function( dependencyIds, thisPackageId ) {
+			var thisPackage = allPackagesRelevantToThisParcel[ thisPackageId ];
+			var thisPackageDependencies = _.map( dependencyIds, function( thisDependencyId ) { return allPackagesRelevantToThisParcel[ thisDependencyId ]; } );
+			thisPackage.setDependencies( thisPackageDependencies );
+		} );
+
+		_.each( allPackagesRelevantToThisParcel, function( thisPackage ) {
+			if( thisPackage === mappedParcel ) return; // debatable whether or not it makes sense semantically to include a parcel as a dependent of itself.
+
+			thisPackage.addDependentParcel( mappedParcel );
+		} );
+
+		// finally, we can calculate the topo sort of all the dependencies and assets in the parcel
+		mappedParcel.calcSortedDependencies();
+		mappedParcel.calcParcelAssets( assetTypes );
+
+		nextSeries();
+	} ], function( err ) {
+		return callback( err, mappedParcel, packagesThatWereCreated );
+	} );
 }
 
-function writeCssBundle( destDir, destFilePrefix, styleStreams, callback ) {
-    var cssBundle = through2();
-    var cssBundleShasum;
-    var tempCssBundlePath = path.join( destDir, '.bundle_temp.css' );
-    var destCssBundlePath;
+function getPackageOptionsFromPackageJson( packageId, packageJson, assetTypes, callback ) {
+	var packageOptions = {};
 
-    async.series( [ function( nextSeries ) {
-        // pipe all our style streams to the css bundle in order
+	packageOptions.package = packageJson;
+	packageOptions.id = packageId;
+	packageOptions.path = packageJson.__dirname;
 
-        async.eachSeries( styleStreams, function( thisStyleStream, nextStyleStream ) {
-            thisStyleStream.pipe( cssBundle, { end : false } );
-            thisStyleStream.on( 'end', nextStyleStream );
-        }, function( err ) {
+	packageOptions.assetSrcPathsByType = {};
+	packageOptions.assetTransformsByType = {};
+	packageOptions.assetGlobsByType = {};
 
-             if( err ) return nextSeries( err );
+	if( packageJson.view ) {
+		packageOptions.view = path.resolve( packageOptions.path, packageJson.view );
+		packageOptions.isParcel = true;
+	}
 
-             cssBundle.end();
-             nextSeries();
-        } );
-    }, function( nextSeries ) {
-        // pipe our bundle to both a temporary file and crypto at the same time. need
-        // the temporary file in order to empty the output, or something? not really sure.
-        async.parallel( [ function( nextParallel ) {
-            cssBundle.pipe( crypto.createHash( 'sha1' ) ).pipe( concat( function( buf ) {
-                cssBundleShasum = buf.toString( 'hex' );
-                nextParallel();
-            } ) );
-        }, function( nextParallel ) {
-            cssBundle.pipe( fs.createWriteStream( tempCssBundlePath ) ).on( 'close', nextParallel );
-        } ], nextSeries );
+	async.each( assetTypes, function( thisAssetType, nextAssetType ) {
 
-    }, function( nextSeries ) {
-       
-        // now we have calculated the shasum, so we can write the final file that has the shasum in its name
-        destCssBundlePath = path.join( destDir, destFilePrefix + '_bundle_' + cssBundleShasum + '.css' );
-        fs.rename( tempCssBundlePath, destCssBundlePath, function( err ) {
-            if( err ) return nextSeries( err );
-            
-            nextSeries();
-        } );
-    } ], function( err ) {
-        if( err ) return callback( err );
+		async.parallel( [ function( nextParallel ) {
+			packageOptions.assetSrcPathsByType[ thisAssetType ] = [];
 
-        return callback( null, destCssBundlePath );
-    } );
+			// resolve relative globs to absolute globs
+			var relativeGlobsOfThisType = packageJson[ thisAssetType ] || [];
+			if( _.isString( relativeGlobsOfThisType ) ) relativeGlobsOfThisType = [ relativeGlobsOfThisType ];
+			var absoluteGlobsOfThisType = relativeGlobsOfThisType.map( function( thisGlob ) { return path.resolve( packageOptions.path, thisGlob ); } );
+			packageOptions.assetGlobsByType[ thisAssetType ] = absoluteGlobsOfThisType;
+
+			// resolve absolute globs to actual src files
+			async.map( absoluteGlobsOfThisType, glob,
+			function( err, arrayOfResolvedGlobs ) {
+				if( err ) return nextParallel( err );
+
+				var assetsOfThisType = _.flatten( arrayOfResolvedGlobs );
+				packageOptions.assetSrcPathsByType[ thisAssetType ] = assetsOfThisType;
+
+				nextParallel();
+			} );
+		}, function( nextParallel ) {
+			// resolve transform names to actual tranforms
+			packageOptions.assetTransformsByType[ thisAssetType ] = [];
+
+			if( packageJson.transforms ) {
+				if( _.isArray( packageJson.transforms ) )
+					transformNames = packageJson.transforms;
+				else
+					transformNames = packageJson.transforms[ thisAssetType ] || [];
+			}
+			else
+				transformNames = [];
+
+			async.map( transformNames, function( thisTransformName, nextTransform ) {
+				resolve( thisTransformName, { basedir : packageJson.__dirname }, function( err, modulePath ) {
+					if( err ) return nextTransform( err );
+
+					nextTransform( null, require( modulePath ) );
+				} );
+			}, function( err, transforms ) {
+				if( err ) return nextParallel( err );
+
+				packageOptions.assetTransformsByType[ thisAssetType ] = transforms;
+				nextParallel();
+			} );
+		} ], nextAssetType );
+	}, function( err ) {
+		if( err ) return callback( err );
+
+		callback( null, packageOptions );
+	} );
 }
-
-function getSortedPackageIds( topParcelId, packageManifest ) {
-
-    function getEdgesForPackageDependencyGraph( packageId, packageManifest ) {
-        return packageManifest[ packageId ].dependencies.reduce( function( edges, dependentPackageId ) {
-            return edges.concat( [ [ packageId, dependentPackageId ] ] ).concat( getEdgesForPackageDependencyGraph( dependentPackageId, packageManifest ) );
-        }, [] );
-    }
-
-    var edges = getEdgesForPackageDependencyGraph( topParcelId, packageManifest );
-    var sortedPackageIds = toposort( edges ).reverse();
-
-    return _.union( sortedPackageIds, Object.keys( packageManifest ) ); // some packages have no dependencies!
-}
-
