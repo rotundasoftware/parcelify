@@ -35,7 +35,10 @@ module.exports = function( mainPath, options, callback ) {
 		browserifyInstance : undefined,
 
 		// used internally or in order to share packages between multiple parcelify instances
-		existingPackages : undefined
+		existingPackages : undefined,
+
+		// whether browserify should create source maps
+		debug : false
 	} );
 
 	var thisParcel;
@@ -110,7 +113,8 @@ function processParcel( mainPath, browerifyInstance, options, callback ) {
 	
 	// get things moving. note we need to do this after parcelMap has been called with the browserify instance
 	ostream = browerifyInstance.bundle( {
-		packageFilter : options.packageTransform
+		packageFilter : options.packageTransform,
+		debug : options.debug
 	} ).pipe( through2() );
 }
 

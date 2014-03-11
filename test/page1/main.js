@@ -1,3 +1,3 @@
 require( 'my-module' );
 
-console.log('page 1!');
+console.log('page 1!!!');

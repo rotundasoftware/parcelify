@@ -15,7 +15,7 @@ var argv = minimist( process.argv.slice(2),
 			debug : "d",
 			help : "h"
 		},
-		boolean : [ "watch", "help" ]
+		boolean : [ "watch", "help", "debug" ]
 	}
 );
 
@@ -30,6 +30,8 @@ var jsBundle = resolvePath( argv.jsBundle );
 var cssBundle = resolvePath( argv.cssBundle );
 var tmplBundle = resolvePath( argv.tmplBundle );
 var mainPath = resolvePath( argv._[0] );
+var watch = argv.watch;
+var debug = argv.debug;
 
 if( ! mainPath ) {
 	console.log( "No entry point specified" );
@@ -41,7 +43,9 @@ parcelify( mainPath, {
 		script : jsBundle,
 		style : cssBundle,
 		template : tmplBundle
-	}
+	},
+	watch : watch,
+	debug : debug
 }, function( err, parcel ) {
 	if( err ) {
 		console.log( err.stack );
@@ -49,7 +53,8 @@ parcelify( mainPath, {
 	}
 
 	parcel.on( "done", function() {
-		process.exit( 0 );
+		if( ! watch )
+			process.exit( 0 );
 	} );
 } );
 
