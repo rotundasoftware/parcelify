@@ -23,7 +23,7 @@ In my-module's package.json, the module's style assets are enumerated (glob nota
 {
   "name" : "my-module",
   "version": "1.5.0",
-	"style" : [ "*.css" ]
+  "style" : [ "*.css" ]
 }
 ```
 
