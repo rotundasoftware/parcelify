@@ -100,9 +100,9 @@ mainPath is the path of the JavaScript entry point file. options are as follows:
 ```javascript
 {
     bundles : {
-      script : 'bundle.js',      // path of javascript bundle (not output if omitted)
       style : 'bundle.css',      // path of css bundle (not output if omitted)
       template : 'bundle.tmpl'   // path of tempate bundle (not output if omitted)
+      script : 'bundle.js',      // path of javascript bundle (not output if omitted)
     },
     
     browserifyInstance : undefined  // use your own instance of browserify / watchify
