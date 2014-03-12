@@ -6,7 +6,7 @@ var fs = require('fs');
 var mkdirp = require('mkdirp');
 var tmpdir = (os.tmpdir || os.tmpDir)();
 
- test( 'page1', function( t ) {
+test( 'page1', function( t ) {
 	t.plan( 2 );
 	
 	var mainPath = __dirname + '/page1/main.js';

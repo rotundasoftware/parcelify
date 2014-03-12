@@ -1,7 +1,7 @@
 {
   "name": "parcelify",
   "version": "1.0.0",
-  "description": "Bundle css and client side templates in npm modules",
+  "description": "Add css and template bundles to browserify output",
   "main": "index.js",
   "bin": {
     "parcelify": "bin/cmd.js"
