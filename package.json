@@ -27,7 +27,7 @@
     "tape": "~2.3.2"
   },
   "scripts": {
-    "test": "tape test/*.js"
+    "test": "tape test/test.js"
   },
   "repository": {
     "type": "git",
