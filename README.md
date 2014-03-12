@@ -1,4 +1,3 @@
-
 # Parcelify
 
 Parcelify is a [browserify](http://browserify.org/) wrapper that creates css and / or template bundles from assets in npm modules.
@@ -103,15 +102,21 @@ mainPath is the path of the JavaScript entry point file. options are as follows:
       style : 'bundle.css',      // path of css bundle (not output if omitted)
       template : 'bundle.tmpl'   // path of tempate bundle (not output if omitted)
     },
-    watch : false, 
-    packageTransform : undefined,   // a function that transforms parsed package.json
-                                    // contents before the values are used. Can be used
-                                    // to transform the package.json of modules in which
-                                    // the package.json is incomplete or incorrect. Should
-                                    // return the transformed parsed package.json contents.
+    
+    // passed through to browserify.bundle
+    browserifyBundleOptions : {
+      packageTransform : undefined,   // a function that transforms parsed package.json
+                                      // contents before the values are used. Can be used
+                                      // to transform the package.json of modules in which
+                                      // the package.json is incomplete or incorrect. Should
+                                      // return the transformed parsed package.json contents.
+
+      debug : false                   // Enable source maps that allow you to debug your js files separately. 
+    },
 
     browserifyInstance : undefined  // use your own instance of browserify which needs to
                                     // have been initialized with mainPath.
+    watch : false,
 }
 ```
 
