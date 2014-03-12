@@ -44,8 +44,10 @@ parcelify( mainPath, {
 		style : cssBundle,
 		template : tmplBundle
 	},
-	watch : watch,
-	debug : debug
+	browserifyBundleOptions : {
+		debug : debug
+	},
+	watch : watch
 }, function( err, parcel ) {
 	if( err ) {
 		console.log( err.stack );
