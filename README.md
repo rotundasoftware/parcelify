@@ -3,11 +3,6 @@
 
 Parcelify is a browserify wrapper that creates a css and / or template bundle from assets in npm modules.
 
-* Uses browserify / js requires to resolve dependencies
-* Supports transforms like sass and less
-* Intelligent watch mode
-* Easy to use command line interface or robust API
-
 ## How dat work?
 
 ```
@@ -76,6 +71,19 @@ Several keys are special cased in package.json files.
 * The `style` key is a glob or array of globs that describe the style assets of the module.
 * The `template` key is the same as the `style` key, just for templates instead of styles.
 * The `tranforms` key is an array of names or file paths of [transform modules](https://github.com/substack/module-deps#transforms) to be applied to assets.
+
+```
+{
+  "name": "myModule",
+  "description": "Example package.json for hypothetical myModule.",
+  "version": "1.5.0",
+  "style" : [ "*.scss" ],
+  "template" : [ "*.tmpl" ],
+  "transforms" : [ "sass-css-stream" ],
+  "devDependencies" : {
+    "sass-css-stream": "0.0.1"
+  }
+```
 
 ## API
 
