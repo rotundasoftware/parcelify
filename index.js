@@ -32,12 +32,7 @@ module.exports = function( mainPath, options, callback ) {
 
 		watch : false,
 		browserifyInstance : undefined,
-
-		// options passed through to browserify.bundle()
-		browserifyBundleOptions : {
-			debug : false,
-			packageTransform : undefined
-		},
+		browserifyBundleOptions : {},
 
 		// used internally or in order to share packages between multiple parcelify instances
 		existingPackages : undefined

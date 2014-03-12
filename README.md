@@ -105,19 +105,9 @@ mainPath is the path of the JavaScript entry point file. options are as follows:
       template : 'bundle.tmpl'   // path of tempate bundle (not output if omitted)
     },
     
-    // passed through to browserify.bundle
-    browserifyBundleOptions : {
-      packageTransform : undefined,   // a function that transforms parsed package.json
-                                      // contents before the values are used. Can be used
-                                      // to transform the package.json of modules in which
-                                      // the package.json is incomplete or incorrect. Should
-                                      // return the transformed parsed package.json contents.
+    browserifyInstance : undefined  // use your own instance of browserify / watchify
+    browserifyBundleOptions : {}    // passed through to browserify.bundle()
 
-      debug : false                   // Enable source maps that allow you to debug your js files separately. 
-    },
-
-    browserifyInstance : undefined  // use your own instance of browserify which needs to
-                                    // have been initialized with mainPath.
     watch : false,
 }
 ```
