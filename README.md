@@ -39,10 +39,10 @@ console.log( 'hello world' );
 To run parcelify from the command line,
 
 ```
-$ parcelify main.js -j bundle.js -c bundle.css
+$ parcelify main.js -c bundle.css
 ```
 
-Now `bundle.css` has all the css needed by `main.js` (i.e. `myModule.css`), and `bundle.js` is browserify's output.
+Now `bundle.css` has all the css in the modules on which `main.js` depends (in this case `myModule.css`).
 
 ## Installation
 
