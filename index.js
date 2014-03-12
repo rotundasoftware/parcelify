@@ -71,11 +71,11 @@ function processParcel( mainPath, browerifyInstance, options, callback ) {
 	var jsBundleStream;
 
 	var existingPackages = options.existingPackages || {};
-	var assetTypes = Object.keys( options.bundles );
+	var assetTypes = _.without( Object.keys( options.bundles ), 'script' );
 
 	parcelMap( browerifyInstance, { keys : assetTypes }, function( err, parcelMap ) {
 		if( err ) return callback( err );
-
+		
 		instantiateParcelAndPackagesFromMap( mainPath, parcelMap, existingPackages, assetTypes, function( err, thisParcel, packagesThatWereCreated ) {
 			if( err ) return callback( err );
 
@@ -89,18 +89,14 @@ function processParcel( mainPath, browerifyInstance, options, callback ) {
 					nextSeries();
 				}, function( nextSeries ) {
 					// we are done copying packages and collecting our asset streams. Now write our bundles to disk.
-					async.each( _.union( assetTypes, 'script' ), function( thisAssetType, nextEach ) {
-						if( ! options.bundles[ thisAssetType ] ) return nextEach();
-
-						thisParcel.writeBundle( thisAssetType, options.bundles[ thisAssetType ], nextEach );
-					}, nextSeries );
+					thisParcel.writeBundles( options.bundles, nextSeries );
 				}, function( nextSeries ) {
 					var thisParcelIsNew = _.contains( packagesThatWereCreated, thisParcel );
 
 					if( options.watch ) {
 						// we only create glob watchers for the packages that parcel added to the manifest. Again, we want to avoid doubling up
 						// work in situations where we have multiple parcelify instances running that share common bundles
-						_.each( packagesThatWereCreated, function( thisPackage ) { thisPackage.createAssetWatchers(); } );
+						_.each( packagesThatWereCreated, function( thisPackage ) { thisPackage.createWatchers( assetTypes ); } );
 						if( thisParcelIsNew ) thisParcel.attachWatchListeners( options.bundles );
 					}
 
@@ -132,7 +128,8 @@ function instantiateParcelAndPackagesFromMap( mainPath, parcelMap, existingPacak
 			var packageOptions = {};
 
 			async.waterfall( [ function( nextWaterfall ) {
-				getPackageOptionsFromPackageJson( thisPackageId, parcelMap.packages[ thisPackageId ], assetTypes, nextWaterfall );
+				var packageJson = parcelMap.packages[ thisPackageId ];
+				Package.getOptionsFromPackageJson( thisPackageId, packageJson.__dirname, packageJson, assetTypes, nextWaterfall );
 			}, function( packageOptions, nextWaterfall ) {
 				var thisPackage;
 
@@ -183,75 +180,5 @@ function instantiateParcelAndPackagesFromMap( mainPath, parcelMap, existingPacak
 		nextSeries();
 	} ], function( err ) {
 		return callback( err, mappedParcel, packagesThatWereCreated );
-	} );
-}
-
-function getPackageOptionsFromPackageJson( packageId, packageJson, assetTypes, callback ) {
-	var packageOptions = {};
-
-	packageOptions.package = packageJson;
-	packageOptions.id = packageId;
-	packageOptions.path = packageJson.__dirname;
-
-	packageOptions.assetSrcPathsByType = {};
-	packageOptions.assetTransformsByType = {};
-	packageOptions.assetGlobsByType = {};
-
-	if( packageJson.view ) {
-		packageOptions.view = path.resolve( packageOptions.path, packageJson.view );
-		packageOptions.isParcel = true;
-	}
-
-	async.each( assetTypes, function( thisAssetType, nextAssetType ) {
-
-		async.parallel( [ function( nextParallel ) {
-			packageOptions.assetSrcPathsByType[ thisAssetType ] = [];
-
-			// resolve relative globs to absolute globs
-			var relativeGlobsOfThisType = packageJson[ thisAssetType ] || [];
-			if( _.isString( relativeGlobsOfThisType ) ) relativeGlobsOfThisType = [ relativeGlobsOfThisType ];
-			var absoluteGlobsOfThisType = relativeGlobsOfThisType.map( function( thisGlob ) { return path.resolve( packageOptions.path, thisGlob ); } );
-			packageOptions.assetGlobsByType[ thisAssetType ] = absoluteGlobsOfThisType;
-
-			// resolve absolute globs to actual src files
-			async.map( absoluteGlobsOfThisType, glob,
-			function( err, arrayOfResolvedGlobs ) {
-				if( err ) return nextParallel( err );
-
-				var assetsOfThisType = _.flatten( arrayOfResolvedGlobs );
-				packageOptions.assetSrcPathsByType[ thisAssetType ] = assetsOfThisType;
-
-				nextParallel();
-			} );
-		}, function( nextParallel ) {
-			// resolve transform names to actual tranforms
-			packageOptions.assetTransformsByType[ thisAssetType ] = [];
-
-			if( packageJson.transforms ) {
-				if( _.isArray( packageJson.transforms ) )
-					transformNames = packageJson.transforms;
-				else
-					transformNames = packageJson.transforms[ thisAssetType ] || [];
-			}
-			else
-				transformNames = [];
-
-			async.map( transformNames, function( thisTransformName, nextTransform ) {
-				resolve( thisTransformName, { basedir : packageJson.__dirname }, function( err, modulePath ) {
-					if( err ) return nextTransform( err );
-
-					nextTransform( null, require( modulePath ) );
-				} );
-			}, function( err, transforms ) {
-				if( err ) return nextParallel( err );
-
-				packageOptions.assetTransformsByType[ thisAssetType ] = transforms;
-				nextParallel();
-			} );
-		} ], nextAssetType );
-	}, function( err ) {
-		if( err ) return callback( err );
-
-		callback( null, packageOptions );
 	} );
 }
