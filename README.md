@@ -42,7 +42,7 @@ To run parcelify from the command line,
 $ parcelify main.js -j bundle.js -c bundle.css
 ```
 
-Now `bundle.css` contains all the styles that correspond to the `main.js` entry point, and `bundle.js` is browserify's output.
+Now `bundle.css` contains all the styles needed by `main.js`, and `bundle.js` is browserify's output.
 
 ## Installation
 
