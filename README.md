@@ -77,12 +77,13 @@ Several keys are special cased in package.json files.
   "name": "myModule",
   "description": "Example package.json for hypothetical myModule.",
   "version": "1.5.0",
-  "style" : [ "*.scss" ],
-  "template" : [ "*.tmpl" ],
+  "style" : "*.scss",
+  "template" : [ "templates/part_1.tmpl", "templates/part_2.tmpl" ],
   "transforms" : [ "sass-css-stream" ],
   "devDependencies" : {
     "sass-css-stream": "0.0.1"
   }
+}
 ```
 
 ## API
