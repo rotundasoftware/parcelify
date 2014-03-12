@@ -3,7 +3,7 @@
 
 Parcelify is a [browserify](http://browserify.org/) wrapper that creates css and / or template bundles from assets in npm modules.
 
-Many thanks to [James Halliday](https://twitter.com/substack) for his key role in bringing this module into reality.
+Many thanks to [James Halliday](https://twitter.com/substack) for his pivotal role in bringing this module into reality.
 
 ## How dat work?
 
@@ -21,6 +21,8 @@ In my-module's package.json, the module's style assets are enumerated (glob nota
 
 ```
 {
+  "name" : "my-module",
+  "version": "1.5.0",
 	"style" : [ "*.css" ]
 }
 ```
@@ -76,7 +78,7 @@ Several keys are special cased in package.json files.
 
 ```
 {
-  "name": "myModule",
+  "name": "my-module",
   "description": "Example package.json for hypothetical myModule.",
   "version": "1.5.0",
   "style" : "*.scss",
