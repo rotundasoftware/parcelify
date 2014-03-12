@@ -1,6 +1,6 @@
 {
   "name": "parcelify",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Add css and template bundles to browserify output",
   "main": "index.js",
   "bin": {
