@@ -55,11 +55,11 @@ npm install -g parcelify
 ```
 --cssBundle, -c   Path of the css bundle. If unspecified, no css bundle is output.
 
---tmplBundle, -t  Path of the template bundle. If unspecified.. you get it. Template assets
-                  are enumerated in the exact same way as style assets, just using a 
-                  template key in package.json instead of a `style` key.
+--tmplBundle, -t  Path of the optional template bundle. Template assets are
+                  enumerated in the exact same way as style assets, just using a 
+                  `template` key in package.json instead of a `style` key.
 
---jsBundle, -j    Path of the JavaScript bundle (i.e. browserify's output).
+--jsBundle, -j    Path of the optional JavaScript bundle (i.e. browserify's output).
 
 --watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.
 
