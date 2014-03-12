@@ -53,7 +53,7 @@ npm install -g parcelify
 ## Command line options
 
 ```
---cssBundle, -c   Path of the style bundle. If unspecified, no css bundle is output.
+--cssBundle, -c   Path of the css bundle. If unspecified, no css bundle is output.
 
 --tmplBundle, -t  Path of the template bundle. If unspecified.. you get it. Template assets
                   are enumerated in the exact same way as style assets, just using a 
