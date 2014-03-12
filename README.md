@@ -4,6 +4,8 @@ Parcelify is a [browserify](http://browserify.org/) wrapper that creates css and
 
 Many thanks to [James Halliday](https://twitter.com/substack) for his pivotal role in bringing this module into reality.
 
+[![build status](https://secure.travis-ci.org/rotundasoftware/parcelify.png)](http://travis-ci.org/rotundasoftware/parcelify)
+
 ## How dat work?
 
 ```
