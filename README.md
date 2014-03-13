@@ -1,6 +1,6 @@
 # Parcelify
 
-Parcelify creates css and / or template bundles from npm packages using the [browserify](http://browserify.org/) dependency graph.
+Create css and / or template bundles from npm packages using the [browserify](http://browserify.org/) dependency graph.
 
 * Use npm packages for reusable interface components (w/ css and templates).
 * Easily include transforms for scss, less, etc. on a per-package basis.
