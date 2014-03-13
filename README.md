@@ -51,7 +51,7 @@ Now `bundle.css` has all the css in the modules on which `main.js` depends (in t
 ## Installation
 
 ```
-npm install -g parcelify
+$ npm install -g parcelify
 ```
 
 ## Command line options
