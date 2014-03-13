@@ -1,8 +1,12 @@
 # Parcelify
 
-Parcelify is a [browserify](http://browserify.org/) wrapper that creates css and / or template bundles from assets in npm modules.
+Parcelify creates css and / or template bundles from npm packages using the [browserify](http://browserify.org/) dependency graph.
 
-Many thanks to [James Halliday](https://twitter.com/substack) for his pivotal role in bringing this module into reality.
+* Use npm packages for reusable interface components (w/ css and templates).
+* Easily include transforms for scss, less, etc. on a per-package basis.
+* Rebuild bundles automatically with watch mode.
+
+Many thanks to [James Halliday](https://twitter.com/substack) for his help and guidance in bringing this module into reality.
 
 [![build status](https://secure.travis-ci.org/rotundasoftware/parcelify.png)](http://travis-ci.org/rotundasoftware/parcelify)
 
@@ -64,7 +68,7 @@ npm install -g parcelify
 --watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.
 
 --debug, -d       Enable source maps that allow you to debug your js files separately.
-                  (Passed through directly to browserify.)
+                  (Passed through to browserify.)
 
 --help, -h        Show this message
 ```
@@ -125,7 +129,7 @@ Called when a style or template asset is updated in watch mode. `eventType` is `
 
 ## Contributors
 
-* [James Halliday](https://twitter.com/substack)
+* [James Halliday](https://twitter.com/substack) (Initial design, sage advice, many supporting modules)
 * [David Beck](https://twitter.com/davegbeck)
 * [Oleg Seletsky](https://github.com/go-oleg)
 
