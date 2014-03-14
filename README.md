@@ -90,14 +90,14 @@ Several keys are special cased in package.json files.
 
 ## API
 
-#### parcelify( mainPath, [options,] callback )
+#### p = parcelify( mainPath, [options] )
 
 mainPath is the path of the JavaScript entry point file. options are as follows:
 
 ```javascript
 {
     bundles : {
-      style : 'bundle.css',      // path of css bundle (not output if omitted)
+      style : 'bundle.css',      // path of css bundle
       script : 'bundle.js',      // path of javascript bundle (not output if omitted)
     },
     
@@ -108,16 +108,23 @@ mainPath is the path of the JavaScript entry point file. options are as follows:
 }
 ```
 
-The callback has the signature `callback( err, parcel )`. `parcel` is an event emitter.
+A parcelify object is returned, which is an event emitter.
 
-### parcel.on( 'done', function(){} );
-Called when all bundles have been output.
+### p.on( 'done', function(){} );
+Called when the css bundle has been output.
 
-### parcel.on( 'package', function( package ){} );
+### p.on( 'error', function( err ){} );
+Called when a error occurs.
+
+### p.on( 'packageCreated', function( package ){} );
 Called when a new package is created. `package` is a package object as defined in lib/package.js.
 
-### parcel.on( 'assetUpdated', function( eventType, asset ){} );
+### p.on( 'assetUpdated', function( eventType, asset ){} );
 Called when a style asset is updated in watch mode. `eventType` is `'added'`, `'changed'`, or `'deleted'`, and `asset` is an asset object as defined in lib/asset.js.
+
+## What about client side templates?
+
+We recommend using a browserify transform to precompile and export templates when they are `require`d from JavaScript code.
 
 ## Contributors
 
