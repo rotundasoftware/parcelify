@@ -75,19 +75,16 @@ test( 'page3', function( t ) {
 
 	mkdirp.sync( dstDir );
 
-	parcelify( mainPath, options, function( err, parcel ) {
-		if( err ) throw err;
+	p = parcelify( mainPath, options );
+	p.on( 'done', function() {
+		t.deepEqual(
+			fs.readdirSync( dstDir ).sort(),
+			[ 'bundle.css', 'bundle.js' ]
+		);
 
-		parcel.on( 'done', function() {
-			t.deepEqual(
-				fs.readdirSync( dstDir ).sort(),
-				[ 'bundle.css', 'bundle.js' ]
-			);
-
-			// makes sure when multiple files are listed in a package.json style property, they are concatenated in the right order
-			// (in this case in my-other-module, style is [ "myOtherModuleRed.css", "myOtherModuleBlue.css" ] )
-			t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h3 {\n\tcolor: red;\n}h2 {\n\tcolor: blue;\n}' );
-		} );
+		// makes sure when multiple files are listed in a package.json style property, they are concatenated in the right order
+		// (in this case in my-other-module, style is [ "myOtherModuleRed.css", "myOtherModuleBlue.css" ] )
+		t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h3 {\n\tcolor: red;\n}h2 {\n\tcolor: blue;\n}' );
 	} );
 } );
 
