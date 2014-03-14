@@ -43,16 +43,21 @@ function Parcelify( mainPath, options ) {
 
 	this.mainPath = mainPath;
 
-	var thisParcel;
 	var browerifyInstance;
 
 	if( options.browserifyInstance ) browerifyInstance = options.browerifyInstance;
 	else {
 		browerifyInstance = options.watch ? watchify( mainPath ) : browserify( mainPath );
-		_this.emit( "browerifyInstanceCreated", browerifyInstance );
+		_this.emit( 'browerifyInstanceCreated', browerifyInstance );
 	}
 
 	var existingPackages = options.existingPackages || {};
+
+	_this.on( 'packageCreated', function( thisPackage, isMainParcel ) {
+		existingPackages[ thisPackage.id ] = thisPackage;
+		if( isMainParcel )
+			_this._setupParcelEventRelays( thisPackage );
+	} );
 
 	if( options.watch ) {
 		browerifyInstance.on( 'update', _.debounce( function( changedMains ) {
@@ -60,23 +65,15 @@ function Parcelify( mainPath, options ) {
 				var newOptions = _.clone( options );
 				newOptions.existingPackages = existingPackages;
 
-				_this.processParcel( browerifyInstance, newOptions, function( err, parcel, packagesCreated ) {
+				_this.processParcel( browerifyInstance, newOptions, function( err, parcel ) {
 					if( err ) return _this.emit( 'error', err );
-
-					thisParcel = parcel;
-					_this._setupParcelEventRelays( parcel );
-					_.extend( existingPackages, packagesCreated );
 				} );
 			}
 		}, 1000, true ) );
 	}
 
-	_this.processParcel( browerifyInstance, options, function( err, parcel, packagesCreated ) {
+	_this.processParcel( browerifyInstance, options, function( err, parcel ) {
 		if( err ) return _this.emit( 'error', err );
-
-		thisParcel = parcel;
-		_this._setupParcelEventRelays( parcel );
-		_.extend( existingPackages, packagesCreated );
 	} );
 
 	return _this;
@@ -93,37 +90,39 @@ Parcelify.prototype.processParcel = function( browerifyInstance, options, callba
 	parcelMap( browerifyInstance, { keys : assetTypes }, function( err, parcelMap ) {
 		if( err ) return callback( err );
 		
-		_this.instantiateParcelAndPackagesFromMap( parcelMap, existingPackages, assetTypes, function( err, thisParcel, packagesThatWereCreated ) {
+		_this.instantiateParcelAndPackagesFromMap( parcelMap, existingPackages, assetTypes, function( err, mainParcel, packagesThatWereCreated ) {
 			if( err ) return callback( err );
 
-			thisParcel.setJsBundleStream( jsBundleStream );
+			_this.mainParcel = mainParcel;
+
+			mainParcel.setJsBundleStream( jsBundleStream );
 
 			process.nextTick( function() {
 				async.series( [ function( nextSeries ) {
 					// fire package events for any new packages
-					_.each( packagesThatWereCreated, function( thisPackage ) { thisParcel.emit( 'packageCreated', thisPackage ); } );
+					_.each( packagesThatWereCreated, function( thisPackage ) { _this.emit( 'packageCreated', thisPackage, thisPackage === mainParcel ); } );
 
 					nextSeries();
 				}, function( nextSeries ) {
 					// we are done copying packages and collecting our asset streams. Now write our bundles to disk.
-					thisParcel.writeBundles( options.bundles, nextSeries );
+					mainParcel.writeBundles( options.bundles, nextSeries );
 				}, function( nextSeries ) {
-					var thisParcelIsNew = _.contains( packagesThatWereCreated, thisParcel );
+					var mainParcelIsNew = _.contains( packagesThatWereCreated, mainParcel );
 
 					if( options.watch ) {
 						// we only create glob watchers for the packages that parcel added to the manifest. Again, we want to avoid doubling up
 						// work in situations where we have multiple parcelify instances running that share common bundles
 						_.each( packagesThatWereCreated, function( thisPackage ) { thisPackage.createWatchers( assetTypes ); } );
-						if( thisParcelIsNew ) thisParcel.attachWatchListeners( options.bundles );
+						if( mainParcelIsNew ) mainParcel.attachWatchListeners( options.bundles );
 					}
 
-					if( thisParcelIsNew ) thisParcel.emit( 'done' );
+					if( mainParcelIsNew ) _this.emit( 'done' );
 
 					nextSeries();
 				} ] );
 			} );
 
-			return callback( null, thisParcel, packagesThatWereCreated ); // return this parcel to our calling function via the cb
+			return callback( null, mainParcel ); // return this parcel to our calling function via the cb
 		} );
 	} );
 	
@@ -200,7 +199,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 
 Parcelify.prototype._setupParcelEventRelays = function( parcel ) {
 	var _this = this;
-	var eventsToRelay = [ 'packageCreated', 'done' ];
+	var eventsToRelay = [ 'assetUpdated', 'packageJsonUpdated' ];
 
 	eventsToRelay.forEach( function( thisEvent ) {
 		parcel.on( thisEvent, function() {

@@ -29,7 +29,7 @@ test( 'page1', function( t ) {
 			[ 'bundle.css', 'bundle.js' ]
 		);
 
-		t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h1 {\n\tfont-size: 18px;\n}body {\n	color: red;\n}' );
+		t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h1 {\n\tfont-size: 18px;\n}body {\n	color: red;\n}\n' );
 	} );
 
 } );
