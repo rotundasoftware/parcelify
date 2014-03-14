@@ -22,18 +22,16 @@ test( 'page1', function( t ) {
 
 	mkdirp.sync( dstDir );
 
-	parcelify( mainPath, options, function( err, parcel ) {
-		if( err ) throw err;
+	p = parcelify( mainPath, options );
+	p.on( 'done', function() {
+		t.deepEqual(
+			fs.readdirSync( dstDir ).sort(),
+			[ 'bundle.css', 'bundle.js' ]
+		);
 
-		parcel.on( 'done', function() {
-			t.deepEqual(
-				fs.readdirSync( dstDir ).sort(),
-				[ 'bundle.css', 'bundle.js' ]
-			);
-
-			t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h1 {\n\tfont-size: 18px;\n}body {\n	color: red;\n}' );
-		} );
+		t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h1 {\n\tfont-size: 18px;\n}body {\n	color: red;\n}' );
 	} );
+
 } );
 
 test( 'page2', function( t ) {
@@ -51,17 +49,14 @@ test( 'page2', function( t ) {
 
 	mkdirp.sync( dstDir );
 
-	parcelify( mainPath, options, function( err, parcel ) {
-		if( err ) throw err;
+	p = parcelify( mainPath, options );
+	p.on( 'done', function() {
+		t.deepEqual(
+			fs.readdirSync( dstDir ).sort(),
+			[ 'bundle.css', 'bundle.js' ]
+		);
 
-		parcel.on( 'done', function() {
-			t.deepEqual(
-				fs.readdirSync( dstDir ).sort(),
-				[ 'bundle.css', 'bundle.js' ]
-			);
-
-			t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h1 {\n\tfont-size: 18px;\n}h2 {\n\tfont-weight: bold;\n}' );
-		} );
+		t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h1 {\n\tfont-size: 18px;\n}h2 {\n\tfont-weight: bold;\n}' );
 	} );
 } );
 
@@ -112,17 +107,14 @@ test( 'page4', function( t ) {
 
 	mkdirp.sync( dstDir );
 
-	parcelify( mainPath, options, function( err, parcel ) {
-		if( err ) throw err;
+	p = parcelify( mainPath, options );
+	p.on( 'done', function() {
+		t.deepEqual(
+			fs.readdirSync( dstDir ).sort(),
+			[ 'bundle.css', 'bundle.js', 'bundle.tmpl' ]
+		);
 
-		parcel.on( 'done', function() {
-			t.deepEqual(
-				fs.readdirSync( dstDir ).sort(),
-				[ 'bundle.css', 'bundle.js', 'bundle.tmpl' ]
-			);
-
-			t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h1 {\n\tfont-size: 18px;\n}body h3 {\n  color: red; }\n' );
-			t.deepEqual( fs.readFileSync( options.bundles.template, 'utf8' ), '<script type="template" id="my-module">\n<p>I am a template in myModule.</p>\n</script>\n<script type="template" id="my-template">\n<p>Hello There! I am a template.</p>\n</script>\n' );
-		} );
+		t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h1 {\n\tfont-size: 18px;\n}body h3 {\n  color: red; }\n' );
+		t.deepEqual( fs.readFileSync( options.bundles.template, 'utf8' ), '<script type="template" id="my-module">\n<p>I am a template in myModule.</p>\n</script>\n<script type="template" id="my-template">\n<p>Hello There! I am a template.</p>\n</script>\n' );
 	} );
 } );
