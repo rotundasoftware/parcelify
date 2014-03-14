@@ -44,12 +44,19 @@ function Parcelify( mainPath, options ) {
 	this.mainPath = mainPath;
 
 	var thisParcel;
-	var browerifyInstance = options.browserifyInstance || ( options.watch ? watchify( mainPath ) : browserify( mainPath ) );
+	var browerifyInstance;
+
+	if( options.browserifyInstance ) browerifyInstance = options.browerifyInstance;
+	else {
+		browerifyInstance = options.watch ? watchify( mainPath ) : browserify( mainPath );
+		_this.emit( "browerifyInstanceCreated", browerifyInstance );
+	}
+
 	var existingPackages = options.existingPackages || {};
 
 	if( options.watch ) {
 		browerifyInstance.on( 'update', _.debounce( function( changedMains ) {
-			if( _.contains( changedMains, this.mainPath ) ) { // I think this should always be the case
+			if( _.contains( changedMains, _this.mainPath ) ) { // I think this should always be the case
 				var newOptions = _.clone( options );
 				newOptions.existingPackages = existingPackages;
 

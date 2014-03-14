@@ -38,7 +38,7 @@ if( ! mainPath ) {
 	process.exit( 1 );
 }
 
-parcelify( mainPath, {
+var p = parcelify( mainPath, {
 	bundles : {
 		script : jsBundle,
 		style : cssBundle,
@@ -48,16 +48,16 @@ parcelify( mainPath, {
 		debug : debug
 	},
 	watch : watch
-}, function( err, parcel ) {
-	if( err ) {
-		console.log( err.stack );
-		process.exit( 1 );
-	}
+} );
 
-	parcel.on( "done", function() {
-		if( ! watch )
-			process.exit( 0 );
-	} );
+p.on( 'error', function( err ) {
+	console.log( err.stack );
+	process.exit( 1 );
+} );
+
+p.on( "done", function() {
+	if( ! watch )
+		process.exit( 0 );
 } );
 
 function resolvePath( inputPath ) {

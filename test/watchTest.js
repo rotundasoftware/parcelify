@@ -18,10 +18,7 @@ var options = {
 
 mkdirp.sync( dstDir );
 
-parcelify( mainPath, options, function( err, parcel ) {
-	if( err ) throw err;
-
-	parcel.on( 'done', function() {
-		console.log( 'test-done' );
-	} );
+var p = parcelify( mainPath, options );
+p.on( 'done', function() {
+	console.log( 'test-done' );
 } );
