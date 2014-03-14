@@ -92,7 +92,7 @@ Two keys are special cased in package.json files.
 
 #### p = parcelify( mainPath, [options] )
 
-mainPath is the path of the JavaScript entry point file. options are as follows:
+`mainPath` is the path of the JavaScript entry point file. options are as follows:
 
 ```javascript
 {
