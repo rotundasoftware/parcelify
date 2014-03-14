@@ -27,7 +27,7 @@ In my-module's `package.json`, the module's style assets just need to be enumera
 {
   "name" : "my-module",
   "version": "1.5.0",
-  "style" : [ "*.css" ]
+  "style" : "*.css"
 }
 ```
 
@@ -70,7 +70,7 @@ $ npm install -g parcelify
 
 ## package.json
 
-Several keys are special cased in package.json files.
+Two keys are special cased in package.json files.
 
 * The `style` key is a glob or array of globs that enumerates the style assets of the module.
 * The `tranforms` key is an array of names or file paths of [transform modules](https://github.com/substack/module-deps#transforms) to be applied to assets.
@@ -117,7 +117,7 @@ Called when the css bundle has been output.
 Called when a error occurs.
 
 ### p.on( 'packageCreated', function( package, isMain ){} );
-Called when a new package is created. `package` is a package object as defined in lib/package.js. `isMain` is true iff the package corresponds to the entry point at mainPath.
+Called when a new package is created. `package` is a package object as defined in lib/package.js. `isMain` is true iff the package corresponds to the entry point `mainPath`.
 
 ### p.on( 'assetUpdated', function( eventType, asset ){} );
 Called when a style asset is updated in watch mode. `eventType` is `'added'`, `'changed'`, or `'deleted'`, and `asset` is an asset object as defined in lib/asset.js.
