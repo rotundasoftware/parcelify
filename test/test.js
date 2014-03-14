@@ -65,6 +65,37 @@ test( 'page2', function( t ) {
 	} );
 } );
 
+test( 'page3', function( t ) {
+	t.plan( 2 );
+	
+	var mainPath = __dirname + '/page3/index.js';
+	
+	var dstDir = path.resolve( tmpdir, 'parcelify-test-' + Math.random() );
+	var options = {
+		bundles : {
+			script : path.join( dstDir, 'bundle.js' ),
+			style : path.join( dstDir, 'bundle.css' )
+		}
+	};
+
+	mkdirp.sync( dstDir );
+
+	parcelify( mainPath, options, function( err, parcel ) {
+		if( err ) throw err;
+
+		parcel.on( 'done', function() {
+			t.deepEqual(
+				fs.readdirSync( dstDir ).sort(),
+				[ 'bundle.css', 'bundle.js' ]
+			);
+
+			// makes sure when multiple files are listed in a package.json style property, they are concatenated in the right order
+			// (in this case in my-other-module, style is [ "myOtherModuleRed.css", "myOtherModuleBlue.css" ] )
+			t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h3 {\n\tcolor: red;\n}h2 {\n\tcolor: blue;\n}' );
+		} );
+	} );
+} );
+
 test( 'page4', function( t ) {
 	t.plan( 3 );
 	
