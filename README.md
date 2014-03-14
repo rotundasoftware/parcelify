@@ -22,7 +22,7 @@ Many thanks to [James Halliday](https://twitter.com/substack) for his help and g
 └── main.js
 ```
 
-In my-module's package.json, the module's style assets are enumerated (glob notation):
+In my-module's `package.json`, the module's style assets just need to be enumerated (glob notation):
 
 ```
 {
@@ -32,7 +32,7 @@ In my-module's package.json, the module's style assets are enumerated (glob nota
 }
 ```
 
-Meanwhile, in `main.js`,
+In `main.js`, everything looks the same:
 
 ```javascript
 myModule = require( 'my-module' );
@@ -40,7 +40,7 @@ myModule = require( 'my-module' );
 console.log( 'hello world' );
 ```
 
-To run parcelify from the command line,
+After parcelify is run from the command line,
 
 ```
 $ parcelify main.js -c bundle.css
@@ -77,7 +77,7 @@ $ npm install -g parcelify
 
 Several keys are special cased in package.json files.
 
-* The `style` key is a glob or array of globs that describe the style assets of the module.
+* The `style` key is a glob or array of globs that enumerates the style assets of the module.
 * The `template` key is the same as the `style` key, just for templates instead of styles.
 * The `tranforms` key is an array of names or file paths of [transform modules](https://github.com/substack/module-deps#transforms) to be applied to assets.
 

@@ -12,22 +12,25 @@ var resolve = require( 'resolve' );
 var Package = require( './lib/package' );
 var Parcel = require( './lib/parcel' );
 var resolve = require( 'resolve' );
+var inherits = require( 'inherits' );
 
 var EventEmitter = require('events').EventEmitter;
 var Package = require('./lib/package.js');
 
-module.exports = function( mainPath, options, callback ) {
-	if( arguments.length === 2 ) {
-		// options argument is optional
-		callback = options;
-		options = {};
-	}
+module.exports = Parcelify;
+
+inherits( Parcelify, EventEmitter );
+
+function Parcelify( mainPath, options ) {
+	var _this = this;
+	
+	if( ! ( this instanceof Parcelify ) ) return new Parcelify( mainPath, options );
 
 	options = _.defaults( {}, options, {
 		bundles : {
 			script : 'bundle.js',
-			style : 'bundle.css',
-			template : 'bundle.tmpl'
+			style : 'bundle.css'
+			//template : 'bundle.tmpl'
 		},
 
 		watch : false,
@@ -38,42 +41,52 @@ module.exports = function( mainPath, options, callback ) {
 		existingPackages : undefined
 	} );
 
+	this.mainPath = mainPath;
+
 	var thisParcel;
 	var browerifyInstance = options.browserifyInstance || ( options.watch ? watchify( mainPath ) : browserify( mainPath ) );
 	var existingPackages = options.existingPackages || {};
 
 	if( options.watch ) {
 		browerifyInstance.on( 'update', _.debounce( function( changedMains ) {
-			if( _.contains( changedMains, thisParcel.mainPath ) ) { // I think this should always be the case
+			if( _.contains( changedMains, this.mainPath ) ) { // I think this should always be the case
 				var newOptions = _.clone( options );
 				newOptions.existingPackages = existingPackages;
 
-				processParcel( thisParcel.mainPath, browerifyInstance, newOptions, function( err, parcel, packagesCreated ) {
+				_this.processParcel( browerifyInstance, newOptions, function( err, parcel, packagesCreated ) {
+					if( err ) return _this.emit( 'error', err );
+
 					thisParcel = parcel;
+					_this._setupParcelEventRelays( parcel );
 					_.extend( existingPackages, packagesCreated );
 				} );
 			}
 		}, 1000, true ) );
 	}
 
-	processParcel( mainPath, browerifyInstance, options, function( err, parcel, packagesCreated ) {
+	_this.processParcel( browerifyInstance, options, function( err, parcel, packagesCreated ) {
+		if( err ) return _this.emit( 'error', err );
+
 		thisParcel = parcel;
+		_this._setupParcelEventRelays( parcel );
 		_.extend( existingPackages, packagesCreated );
-
-		callback( err, parcel );
 	} );
-};
 
-function processParcel( mainPath, browerifyInstance, options, callback ) {
+	return _this;
+}
+
+Parcelify.prototype.processParcel = function( browerifyInstance, options, callback ) {
+	var _this = this;
 	var jsBundleStream;
 
 	var existingPackages = options.existingPackages || {};
 	var assetTypes = _.without( Object.keys( options.bundles ), 'script' );
+	var mainPath = this.mainPath;
 
 	parcelMap( browerifyInstance, { keys : assetTypes }, function( err, parcelMap ) {
 		if( err ) return callback( err );
 		
-		instantiateParcelAndPackagesFromMap( mainPath, parcelMap, existingPackages, assetTypes, function( err, thisParcel, packagesThatWereCreated ) {
+		_this.instantiateParcelAndPackagesFromMap( parcelMap, existingPackages, assetTypes, function( err, thisParcel, packagesThatWereCreated ) {
 			if( err ) return callback( err );
 
 			thisParcel.setJsBundleStream( jsBundleStream );
@@ -81,7 +94,7 @@ function processParcel( mainPath, browerifyInstance, options, callback ) {
 			process.nextTick( function() {
 				async.series( [ function( nextSeries ) {
 					// fire package events for any new packages
-					_.each( packagesThatWereCreated, function( thisPackage ) { thisParcel.emit( 'package', thisPackage ); } );
+					_.each( packagesThatWereCreated, function( thisPackage ) { thisParcel.emit( 'packageCreated', thisPackage ); } );
 
 					nextSeries();
 				}, function( nextSeries ) {
@@ -109,12 +122,13 @@ function processParcel( mainPath, browerifyInstance, options, callback ) {
 	
 	// get things moving. note we need to do this after parcelMap has been called with the browserify instance
 	jsBundleStream = browerifyInstance.bundle( options.browserifyBundleOptions ).pipe( through2() );
-}
+};
 
-function instantiateParcelAndPackagesFromMap( mainPath, parcelMap, existingPacakages, assetTypes, callback ) {
+Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, existingPacakages, assetTypes, callback ) {
+	var _this = this;
 	var mappedParcel = null;
 	var packagesThatWereCreated = {};
-	var pathOfMappedParcel = path.dirname( mainPath );
+	var pathOfMappedParcel = path.dirname( this.mainPath );
 	var thisIsTheTopLevelParcel;
 
 	async.series( [ function( nextSeries ) {
@@ -132,7 +146,7 @@ function instantiateParcelAndPackagesFromMap( mainPath, parcelMap, existingPacak
 				if( ! existingPacakages[ thisPackageId ] ) {
 					if( packageOptions.isParcel ) {
 						if( thisIsTheTopLevelParcel ) {
-							packageOptions.mainPath = mainPath;
+							packageOptions.mainPath = _this.mainPath;
 						}
 
 						thisPackage = packagesThatWereCreated[ thisPackageId ] = new Parcel( packageOptions );
@@ -175,4 +189,16 @@ function instantiateParcelAndPackagesFromMap( mainPath, parcelMap, existingPacak
 	} ], function( err ) {
 		return callback( err, mappedParcel, packagesThatWereCreated );
 	} );
-}
+};
+
+Parcelify.prototype._setupParcelEventRelays = function( parcel ) {
+	var _this = this;
+	var eventsToRelay = [ 'packageCreated', 'done' ];
+
+	eventsToRelay.forEach( function( thisEvent ) {
+		parcel.on( thisEvent, function() {
+			var args = Array.prototype.slice.call( arguments );
+			_this.emit.apply( _this, [].concat( thisEvent, args ) );
+		} );
+	} );
+};
