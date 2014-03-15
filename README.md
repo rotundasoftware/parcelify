@@ -2,7 +2,7 @@
 
 Create css bundles from npm packages using the [browserify](http://browserify.org/) dependency graph.
 
-* Use npm packages for reusable interface components that have their own styles.
+* Use npm packages for reusable interface components.
 * Easily include transforms for scss, less, etc. on a per-package basis.
 * Rebuild css bundle automatically with watch mode.
 
