@@ -56,7 +56,7 @@ $ npm install -g parcelify
 ## Command line options
 
 ```
---cssBundle, -c   Path of the css bundle. If unspecified, no css bundle is output.
+--cssBundle, -c   Path of the css bundle.
 
 --watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.
 
