@@ -124,7 +124,7 @@ Called when a style asset is updated in watch mode. `eventType` is `'added'`, `'
 
 ## What about client side templates?
 
-Parcelify can compile template bundles in the exact same was as css bundles using the -t option on the command line and the `template` key in package.json. However, for maximum encapsulation and inter-package compatibility we recommend using a browserify transform like [node-hbsfy](https://github.com/epeli/node-hbsfy) to precompile templates and `require` them explicitly.
+Parcelify can compile template bundles in the exact same was as css bundles using the `-t` option on the command line and the `template` key in package.json. However, for maximum encapsulation and inter-package compatibility we recommend using a browserify transform like [node-hbsfy](https://github.com/epeli/node-hbsfy) to precompile templates and `require` them explicitly.
 
 ## Contributors
 
