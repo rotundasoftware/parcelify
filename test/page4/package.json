@@ -5,8 +5,5 @@
   "template": "*.tmpl",
   "transforms": [
     "sass-css-stream"
-  ],
-  "dependencies": {
-    "sass-css-stream": "0.0.1"
-  }
+  ]
 }

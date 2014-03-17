@@ -81,21 +81,35 @@ function Parcelify( mainPath, options ) {
 
 Parcelify.prototype.processParcel = function( browerifyInstance, options, callback ) {
 	var _this = this;
-	var jsBundleStream;
+	var jsBundleContents;
 
 	var existingPackages = options.existingPackages || {};
 	var assetTypes = _.without( Object.keys( options.bundles ), 'script' );
 	var mainPath = this.mainPath;
+	var mainParcelMap;
+	var packageFilter = options.browserifyBundleOptions.packageFilter;
 
-	parcelMap( browerifyInstance, { keys : assetTypes }, function( err, parcelMap ) {
+	var parcelMapEmitter = parcelMap( browerifyInstance, { keys : assetTypes, packageFilter : packageFilter } );
+
+	async.parallel( [ function( nextParallel ) {
+		parcelMapEmitter.on( 'done', function( res ) {
+			mainParcelMap = res;
+			nextParallel();
+		} );
+	}, function( nextParallel ) {
+		browerifyInstance.bundle( options.browserifyBundleOptions, function( err, res ) {
+			jsBundleContents = res;
+			nextParallel();
+		} );
+	} ], function( err ) {
 		if( err ) return callback( err );
-		
-		_this.instantiateParcelAndPackagesFromMap( parcelMap, existingPackages, assetTypes, function( err, mainParcel, packagesThatWereCreated ) {
+
+		_this.instantiateParcelAndPackagesFromMap( mainParcelMap, existingPackages, assetTypes, function( err, mainParcel, packagesThatWereCreated ) {
 			if( err ) return callback( err );
 
 			_this.mainParcel = mainParcel;
 
-			mainParcel.setJsBundleStream( jsBundleStream );
+			mainParcel.setJsBundleContents( jsBundleContents );
 
 			process.nextTick( function() {
 				async.series( [ function( nextSeries ) {
@@ -108,7 +122,6 @@ Parcelify.prototype.processParcel = function( browerifyInstance, options, callba
 					mainParcel.writeBundles( options.bundles, nextSeries );
 				}, function( nextSeries ) {
 					var mainParcelIsNew = _.contains( packagesThatWereCreated, mainParcel );
-
 					if( options.watch ) {
 						// we only create glob watchers for the packages that parcel added to the manifest. Again, we want to avoid doubling up
 						// work in situations where we have multiple parcelify instances running that share common bundles
@@ -127,7 +140,7 @@ Parcelify.prototype.processParcel = function( browerifyInstance, options, callba
 	} );
 	
 	// get things moving. note we need to do this after parcelMap has been called with the browserify instance
-	jsBundleStream = browerifyInstance.bundle( options.browserifyBundleOptions ).pipe( through2() );
+	//jsBundleStream = browerifyInstance.bundle( options.browserifyBundleOptions ); //.pipe( through2() );
 };
 
 Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, existingPacakages, assetTypes, callback ) {
@@ -143,7 +156,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 
 			async.waterfall( [ function( nextWaterfall ) {
 				var packageJson = parcelMap.packages[ thisPackageId ];
-				Package.getOptionsFromPackageJson( thisPackageId, packageJson.__dirname, packageJson, assetTypes, nextWaterfall );
+				Package.getOptionsFromPackageJson( thisPackageId, packageJson.path, packageJson, assetTypes, nextWaterfall );
 			}, function( packageOptions, nextWaterfall ) {
 				var thisPackage;
 
