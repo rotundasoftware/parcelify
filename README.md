@@ -1,6 +1,6 @@
 # Parcelify
 
-Create css or other bundles from npm packages using the [browserify](http://browserify.org/) dependency graph.
+Output css or other bundles based on the [browserify](http://browserify.org/) dependency graph.
 
 * Use npm packages for reusable interface components.
 * Easily include transforms for scss, less, etc. on a per-package basis.
@@ -58,7 +58,7 @@ $ npm install -g parcelify
 ```
 --cssBundle, -c   Path of a destination css bundle.
 
---tmplBundle, -t  Path of optional template bundle (see below discussion on client side templates)
+--tmplBundle, -t  Path of optional template bundle (see below discussion on client side templates).
 
 --watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.
 
@@ -114,10 +114,10 @@ Two keys are special cased in package.json files.
 A parcelify object is returned, which is an event emitter.
 
 ### p.on( 'done', function(){} );
-Called when the css bundle has been output.
+Called when all bundles have been output.
 
 ### p.on( 'error', function( err ){} );
-Called when a error occurs.
+Called when an error occurs.
 
 ### p.on( 'packageCreated', function( package, isMain ){} );
 Called when a new package is created. `package` is a package object as defined in lib/package.js. `isMain` is true iff the package corresponds to the entry point `mainPath`.
@@ -127,11 +127,11 @@ Called when a style asset is updated in watch mode. `eventType` is `'added'`, `'
 
 ## What about client side templates?
 
-Parcelify can compile template bundles in the exact same was as css bundles using the `-t` option on the command line and the `template` key in package.json. However, if you plan to share your packages we recommend against this practice as it makes your packages difficult to consume. Instead we recommend using a browserify transform like [node-hbsfy](https://github.com/epeli/node-hbsfy) or [nunjucksify](https://github.com/rotundasoftware/nunjucksify) to precompile templates and `require` them explicitly.
+Parcelify can compile template bundles using the `-t` option on the command line and the `template` key in package.json. However, if you plan to share your packages we recommend against this practice as it makes your packages difficult to consume. Instead we recommend using a browserify transform like [node-hbsfy](https://github.com/epeli/node-hbsfy) or [nunjucksify](https://github.com/rotundasoftware/nunjucksify) to precompile templates and `require` them explicitly.
 
 ## Advanced usage and other assets like images
 
-Parcelify actually supports concatenation of arbitrary asset types. Just add a bundle for that asset type in the `bundles` key in parcelify options and use the same key to enumerate assets of that type in your `package.json`. For the case of assets like images, that do not need to be concatenated, you can specify a `null` path for the bundle. Parcelify will collect all assets of that type but not concatenate them. You can then process the individual assets further using event callbacks.
+Parcelify actually supports concatenation of arbitrary asset types. Just add a bundle for that asset type in the `bundles` key in parcelify options and use the same key to enumerate assets of that type in your `package.json`. For the case of assets like images, that do not need to be concatenated, you can specify a `null` path for the bundle. Parcelify will collect all assets of that type but not concatenate them. You can then process the individual assets further using the event callbacks.
 
 ## Contributors
 
