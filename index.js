@@ -92,12 +92,18 @@ Parcelify.prototype.processParcel = function( browerifyInstance, options, callba
 	var parcelMapEmitter = parcelMap( browerifyInstance, { keys : assetTypes, packageFilter : packageFilter } );
 
 	async.parallel( [ function( nextParallel ) {
+		parcelMapEmitter.on( 'error', function( err ) {
+			return callback( err );
+		} );
+
 		parcelMapEmitter.on( 'done', function( res ) {
 			mainParcelMap = res;
 			nextParallel();
 		} );
 	}, function( nextParallel ) {
 		browerifyInstance.bundle( options.browserifyBundleOptions, function( err, res ) {
+			if( err ) return nextParallel( err );
+
 			jsBundleContents = res;
 			nextParallel();
 		} );
