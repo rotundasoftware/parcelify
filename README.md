@@ -1,12 +1,12 @@
 # Parcelify
 
-Create css bundles from npm packages using the [browserify](http://browserify.org/) dependency graph.
+Create css or other bundles from npm packages using the [browserify](http://browserify.org/) dependency graph.
 
 * Use npm packages for reusable interface components.
 * Easily include transforms for scss, less, etc. on a per-package basis.
-* Rebuild css bundle automatically with watch mode.
+* Rebuild bundles automatically with watch mode.
 
-Many thanks to [James Halliday](https://twitter.com/substack) for his help and guidance in bringing this module into reality.
+Many thanks to [James Halliday](https://twitter.com/substack) for his help and guidance in bringing this project into reality.
 
 [![build status](https://secure.travis-ci.org/rotundasoftware/parcelify.png)](http://travis-ci.org/rotundasoftware/parcelify)
 
@@ -56,11 +56,13 @@ $ npm install -g parcelify
 ## Command line options
 
 ```
---cssBundle, -c   Path of the css bundle.
+--cssBundle, -c   Path of a destination css bundle.
+
+--tmplBundle, -t  Path of optional template bundle (see below discussion on client side templates)
 
 --watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.
 
---jsBundle, -j    Path of the optional JavaScript bundle (i.e. browserify's output).
+--jsBundle, -j    Path of the JavaScript bundle (i.e. browserify's output).
 
 --debug, -d       Enable source maps that allow you to debug your js files separately.
                   (Passed through to browserify.)
@@ -97,8 +99,9 @@ Two keys are special cased in package.json files.
 ```javascript
 {
     bundles : {
-      style : 'bundle.css',      // path of css bundle
-      script : 'bundle.js',      // path of javascript bundle (not output if omitted)
+      script : 'bundle.js',        // path of javascript bundle (not output if omitted)
+      style : 'bundle.css',        // path of css bundle (not output if omitted)
+      template : 'bundle.tmpl',    // path of template bundle (not output if omitted)
     },
     
     browserifyInstance : undefined  // use your own instance of browserify / watchify
@@ -124,7 +127,11 @@ Called when a style asset is updated in watch mode. `eventType` is `'added'`, `'
 
 ## What about client side templates?
 
-Parcelify can compile template bundles in the exact same was as css bundles using the `-t` option on the command line and the `template` key in package.json. However, for maximum encapsulation and inter-package compatibility we recommend using a browserify transform like [node-hbsfy](https://github.com/epeli/node-hbsfy) to precompile templates and `require` them explicitly.
+Parcelify can compile template bundles in the exact same was as css bundles using the `-t` option on the command line and the `template` key in package.json. However, if you plan to share your packages we recommend against this practice as it makes your packages difficult to consume. Instead we recommend using a browserify transform like [node-hbsfy](https://github.com/epeli/node-hbsfy) or [nunjucksify](https://github.com/rotundasoftware/nunjucksify) to precompile templates and `require` them explicitly.
+
+## Advanced usage and other assets like images
+
+Parcelify actually supports concatenation of arbitrary asset types. Just add a bundle for that asset type in the `bundles` key in parcelify options and use the same key to enumerate assets of that type in your `package.json`. For the case of assets like images, that do not need to be concatenated, you can specify a `null` path for the bundle. Parcelify will collect all assets of that type but not concatenate them. You can then process the individual assets further using event callbacks.
 
 ## Contributors
 
