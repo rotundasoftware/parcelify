@@ -42,6 +42,7 @@ function Parcelify( mainPath, options ) {
 	} );
 
 	this.mainPath = mainPath;
+	this.watching = false;
 
 	var browerifyInstance;
 
@@ -61,6 +62,8 @@ function Parcelify( mainPath, options ) {
 
 	if( options.watch ) {
 		browerifyInstance.on( 'update', _.debounce( function( changedMains ) {
+			_this.watching = true;
+
 			if( _.contains( changedMains, _this.mainPath ) ) { // I think this should always be the case
 				var newOptions = _.clone( options );
 				newOptions.existingPackages = existingPackages;
@@ -126,6 +129,8 @@ Parcelify.prototype.processParcel = function( browerifyInstance, options, callba
 				}, function( nextSeries ) {
 					// we are done copying packages and collecting our asset streams. Now write our bundles to disk.
 					mainParcel.writeBundles( options.bundles, nextSeries );
+
+					_.each( options.bundles, function( path, assetType ) { _this.emit( 'bundleWritten', path, assetType, _this.watching ); } );
 				}, function( nextSeries ) {
 					var mainParcelIsNew = _.contains( packagesThatWereCreated, mainParcel );
 					if( options.watch ) {
@@ -225,5 +230,9 @@ Parcelify.prototype._setupParcelEventRelays = function( parcel ) {
 			var args = Array.prototype.slice.call( arguments );
 			_this.emit.apply( _this, [].concat( thisEvent, args ) );
 		} );
+	} );
+
+	parcel.on( 'bundleUpdated', function( path, assetType ) {
+		_this.emit( 'bundleWritten', path, assetType, true );
 	} );
 };
