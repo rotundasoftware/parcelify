@@ -159,22 +159,22 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 	var mappedParcel = null;
 	var packagesThatWereCreated = {};
 	var pathOfMappedParcel = path.dirname( this.mainPath );
-	var thisIsTheTopLevelParcel;
 
 	async.series( [ function( nextSeries ) {
 		async.each( Object.keys( parcelMap.packages ), function( thisPackageId, nextPackageId ) {
+			var packageJson = parcelMap.packages[ thisPackageId ];
 			var packageOptions = {};
-
+			
 			async.waterfall( [ function( nextWaterfall ) {
-				var packageJson = parcelMap.packages[ thisPackageId ];
 				Package.getOptionsFromPackageJson( thisPackageId, packageJson.path, packageJson, assetTypes, nextWaterfall );
 			}, function( packageOptions, nextWaterfall ) {
 				var thisPackage;
 
-				thisIsTheTopLevelParcel = packageOptions.path === pathOfMappedParcel;
-
+				var thisIsTheTopLevelParcel = packageOptions.path === pathOfMappedParcel;
+				var thisPackageIsAParcel = thisIsTheTopLevelParcel || packageOptions.view;
+			
 				if( ! existingPacakages[ thisPackageId ] ) {
-					if( packageOptions.isParcel ) {
+					if( thisPackageIsAParcel ) {
 						if( thisIsTheTopLevelParcel ) {
 							packageOptions.mainPath = _this.mainPath;
 						}
