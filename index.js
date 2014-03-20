@@ -8,10 +8,8 @@ var path = require( 'path' );
 var _ = require( 'underscore' );
 var async = require( 'async' );
 var glob = require( 'glob' );
-var resolve = require( 'resolve' );
 var Package = require( './lib/package' );
 var Parcel = require( './lib/parcel' );
-var resolve = require( 'resolve' );
 var inherits = require( 'inherits' );
 
 var EventEmitter = require('events').EventEmitter;
@@ -46,37 +44,40 @@ function Parcelify( mainPath, options ) {
 
 	var browerifyInstance;
 
-	if( options.browserifyInstance ) browerifyInstance = options.browerifyInstance;
-	else {
-		browerifyInstance = options.watch ? watchify( mainPath ) : browserify( mainPath );
-		_this.emit( 'browerifyInstanceCreated', browerifyInstance );
-	}
+	// before we jump the gun, return from this function so we can listen to events from the calling function
+	process.nextTick( function() {
+		if( options.browserifyInstance ) browerifyInstance = options.browerifyInstance;
+		else {
+			browerifyInstance = options.watch ? watchify( mainPath ) : browserify( mainPath );
+			_this.emit( 'browerifyInstanceCreated', browerifyInstance );
+		}
 
-	var existingPackages = options.existingPackages || {};
+		var existingPackages = options.existingPackages || {};
 
-	_this.on( 'packageCreated', function( thisPackage, isMainParcel ) {
-		existingPackages[ thisPackage.id ] = thisPackage;
-		if( isMainParcel )
-			_this._setupParcelEventRelays( thisPackage );
-	} );
+		_this.on( 'packageCreated', function( thisPackage, isMainParcel ) {
+			existingPackages[ thisPackage.id ] = thisPackage;
+			if( isMainParcel )
+				_this._setupParcelEventRelays( thisPackage );
+		} );
 
-	if( options.watch ) {
-		browerifyInstance.on( 'update', _.debounce( function( changedMains ) {
-			_this.watching = true;
+		if( options.watch ) {
+			browerifyInstance.on( 'update', _.debounce( function( changedMains ) {
+				_this.watching = true;
 
-			if( _.contains( changedMains, _this.mainPath ) ) { // I think this should always be the case
-				var newOptions = _.clone( options );
-				newOptions.existingPackages = existingPackages;
+				if( _.contains( changedMains, _this.mainPath ) ) { // I think this should always be the case
+					var newOptions = _.clone( options );
+					newOptions.existingPackages = existingPackages;
 
-				_this.processParcel( browerifyInstance, newOptions, function( err, parcel ) {
-					if( err ) return _this.emit( 'error', err );
-				} );
-			}
-		}, 1000, true ) );
-	}
+					_this.processParcel( browerifyInstance, newOptions, function( err, parcel ) {
+						if( err ) return _this.emit( 'error', err );
+					} );
+				}
+			}, 1000, true ) );
+		}
 
-	_this.processParcel( browerifyInstance, options, function( err, parcel ) {
-		if( err ) return _this.emit( 'error', err );
+		_this.processParcel( browerifyInstance, options, function( err, parcel ) {
+			if( err ) return _this.emit( 'error', err );
+		} );
 	} );
 
 	return _this;

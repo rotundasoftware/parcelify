@@ -127,7 +127,7 @@ Called when a style asset is updated in watch mode. `eventType` is `'added'`, `'
 
 ## What about client side templates?
 
-Parcelify can compile template bundles using the `-t` option on the command line and the `template` key in package.json. However, if you plan to share your packages we recommend against this practice as it makes your packages difficult to consume. Instead we recommend using a browserify transform like [node-hbsfy](https://github.com/epeli/node-hbsfy) or [nunjucksify](https://github.com/rotundasoftware/nunjucksify) to precompile templates and `require` them explicitly.
+Parcelify can compile template bundles using the `-t` option on the command line and the `template` key in package.json. However, if you plan to share your packages we recommend against this practice as it makes your packages difficult to consume. Instead we recommend using a browserify transform like [node-hbsfy](https://github.com/epeli/node-hbsfy) or [nunjucksify](https://github.com/rotundasoftware/nunjucksify) to precompile templates and `require` them explicitly from your JavaScript files.
 
 ## Advanced usage and other assets like images
 
