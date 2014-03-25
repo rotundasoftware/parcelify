@@ -115,3 +115,29 @@ test( 'page4', function( t ) {
 		t.deepEqual( fs.readFileSync( options.bundles.template, 'utf8' ), '<script type="template" id="my-module">\n<p>I am a template in myModule.</p>\n</script>\n<script type="template" id="my-template">\n<p>Hello There! I am a template.</p>\n</script>\n' );
 	} );
 } );
+
+// test a parcel with no package.json
+test( 'page5', function( t ) {
+	t.plan( 1 );
+	
+	var mainPath = __dirname + '/page5/main.js';
+	
+	var dstDir = path.resolve( tmpdir, 'parcelify-test-' + Math.random() );
+
+	var options = {
+		bundles : {
+			script : path.join( dstDir, 'bundle.js' )
+		}
+	};
+
+	mkdirp.sync( dstDir );
+
+	p = parcelify( mainPath, options );
+	p.on( 'done', function() {
+		t.deepEqual(
+			fs.readdirSync( dstDir ).sort(),
+			[ 'bundle.js' ]
+		);
+	} );
+
+} );
