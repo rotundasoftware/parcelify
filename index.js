@@ -28,10 +28,11 @@ function Parcelify( mainPath, options ) {
 		bundles : {
 			script : 'bundle.js',
 			style : 'bundle.css'
-			//template : 'bundle.tmpl'
+			// template : 'bundle.tmpl'		// don't bundle templates by default.. against best-practices
 		},
 
 		watch : false,
+
 		browserifyInstance : undefined,
 		browserifyBundleOptions : {},
 
@@ -159,7 +160,6 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 	var _this = this;
 	var mappedParcel = null;
 	var packagesThatWereCreated = {};
-	var pathOfMappedParcel = path.dirname( this.mainPath );
 
 	async.series( [ function( nextSeries ) {
 		async.each( Object.keys( parcelMap.packages ), function( thisPackageId, nextPackageId ) {
@@ -167,11 +167,11 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 			var packageOptions = {};
 			
 			async.waterfall( [ function( nextWaterfall ) {
-				Package.getOptionsFromPackageJson( thisPackageId, packageJson.path, packageJson, assetTypes, nextWaterfall );
+				Package.getOptionsFromPackageJson( thisPackageId, packageJson.__path, packageJson, assetTypes, nextWaterfall );
 			}, function( packageOptions, nextWaterfall ) {
 				var thisPackage;
 
-				var thisIsTheTopLevelParcel = packageOptions.path === pathOfMappedParcel;
+				var thisIsTheTopLevelParcel = packageJson.__isMain;
 				var thisPackageIsAParcel = thisIsTheTopLevelParcel || packageOptions.view;
 			
 				if( ! existingPacakages[ thisPackageId ] ) {
