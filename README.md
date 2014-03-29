@@ -58,7 +58,7 @@ $ npm install -g parcelify
 ```
 --cssBundle, -c   Path of a destination css bundle.
 
---tmplBundle, -t  Path of optional template bundle (see below discussion on client side templates).
+--transform, -t   Name or path of a default transform. (See discussion of `defaultTransforms` option.)
 
 --watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.
 
@@ -69,25 +69,26 @@ $ npm install -g parcelify
 --help, -h        Show this message
 ```
 
-## package.json
+## Tranforms
 
-Two keys are special cased in package.json files.
-
-* The `style` key is a glob or array of globs that enumerates the style assets of the module.
-* The `tranforms` key is an array of names or file paths of [transform modules](https://github.com/substack/module-deps#transforms) to be applied to assets.
+Tranforms like sass -> css can be applied to assets in individual packages using the `transforms` key in a package's `package.json`, or quasi-globally using the `defaultTransforms` option. The `transform` key in `package.json` should be an array of names or file paths of [transform modules](https://github.com/substack/module-deps#transforms). For example,
 
 ```
 {
   "name": "my-module",
-  "description": "Example package.json for hypothetical myModule.",
+  "description": "Example module.",
   "version": "1.5.0",
   "style" : "*.scss",
   "transforms" : [ "sass-css-stream" ],
-  "devDependencies" : {
+  "dependencies" : {
     "sass-css-stream": "0.0.1"
   }
 }
 ```
+
+Transforms modules are called on all assets (including JavaScript files). It is up to the module to determine whether or not it should apply itself to an asset based on the asset's file extension.
+
+It is recommend that you rely on the `tranforms` key in `package.json` as opposed to the global `defaultTranforms` option whenever possible as the former make your packages easier to consume across applications.
 
 ## API
 
@@ -99,13 +100,13 @@ Two keys are special cased in package.json files.
 
 ```javascript
 bundles : {
-  script : 'bundle.js',
-  style : 'bundle.css'
+  script : 'bundle.js',  // send browserify output here
+  style : 'bundle.css'   // bundle style assets and output here
 }
 ```
-* `defaultTranforms` (default: undefined) - An array of transform module names or functions to be applied when no other transforms are specified for a package. Can be used for "global" application level transforms like sass -> css.
-* `browserifyInstance` (default: undefined) - Use your own instance of browserify / watchify
-* `browserifyBundleOptions` (default: {}) - Passed through to browserify.bundle()
+* `defaultTransforms` (default: undefined) - An array of transform module names / paths or functions to be applied when no other transforms are specified for a package. Can be used for application level transforms.
+* `browserifyInstance` (default: undefined) - Use your own instance of browserify / watchify.
+* `browserifyBundleOptions` (default: {}) - Passed through to browserify.bundle().
 * `watch` : Watch mode - automatically rebuild bundles as appropriate for changes.
 
 A parcelify object is returned, which is an event emitter.
@@ -122,13 +123,13 @@ Called when a new package is created. `package` is a package object as defined i
 ### p.on( 'assetUpdated', function( eventType, asset ){} );
 Called when a style asset is updated in watch mode. `eventType` is `'added'`, `'changed'`, or `'deleted'`, and `asset` is an asset object as defined in `lib/asset.js`.
 
-## What about client side templates?
+## Client side templates and other assets
 
-Parcelify can compile template bundles using the `-t` option on the command line and the `template` key in package.json. However, if you plan to share your packages we recommend against this practice as it makes your packages difficult to consume. Instead we recommend using a browserify transform like [node-hbsfy](https://github.com/epeli/node-hbsfy) or [nunjucksify](https://github.com/rotundasoftware/nunjucksify) to precompile templates and `require` them explicitly from your JavaScript files.
+Parcelify actually supports concatenation / enumeration of arbitrary asset types. Just add a bundle for that asset type in the `bundles` option and use the same key to enumerate assets of that type in your `package.json`.
 
-## Advanced usage and other assets like images
+A tempting use case for this feature is client side templates - just include a `template` key in package.json and a corresponding entry in the `bundles` option, and you have a bundle of client side templates. However, if you plan to share your packages we recommend against this practice as it makes your packages difficult to consume. Instead we recommend using a browserify transform like [node-hbsfy](https://github.com/epeli/node-hbsfy) or [nunjucksify](https://github.com/rotundasoftware/nunjucksify) to precompile templates and `require` them explicitly from your JavaScript files.
 
-Parcelify actually supports concatenation of arbitrary asset types. Just add a bundle for that asset type in the `bundles` key in parcelify options and use the same key to enumerate assets of that type in your `package.json`. For the case of assets like images, that do not need to be concatenated, you can specify a `null` path for the bundle. Parcelify will collect all assets of that type but not concatenate them. You can then process the individual assets further using the event callbacks.
+For the case of assets like images, that do not need to be concatenated, you can specify a `null` path for the bundle. Parcelify will collect all assets of that type but not concatenate them. You can then process the individual assets further using the event callbacks.
 
 ## Contributors
 
