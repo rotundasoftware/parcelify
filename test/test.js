@@ -143,7 +143,7 @@ test( 'page5', function( t ) {
 } );
 
 
-// test a parcel with no package.json
+// default transforms
 test( 'page6', function( t ) {
 	t.plan( 2 );
 	
@@ -155,16 +155,14 @@ test( 'page6', function( t ) {
 		bundles : {
 			script : path.join( dstDir, 'bundle.js' ),
 			style : path.join( dstDir, 'bundle.css' )
-		}
+		},
+
+		defaultTransforms : [ require( 'sass-css-stream' ) ]
 	};
 
 	mkdirp.sync( dstDir );
 
 	p = parcelify( mainPath, options );
-
-	p.on( 'packageCreated', function( thePackage ) {
-		thePackage.addTransform( require( 'sass-css-stream' ) );
-	} );
 
 	p.on( 'done', function() {
 		t.deepEqual(

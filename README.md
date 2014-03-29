@@ -64,8 +64,7 @@ $ npm install -g parcelify
 
 --jsBundle, -j    Path of the JavaScript bundle (i.e. browserify's output).
 
---debug, -d       Enable source maps that allow you to debug your js files separately.
-                  (Passed through to browserify.)
+--debug, -d       Enable source maps that allow you to debug your js files separately. (Pass-thru to browserify.)
 
 --help, -h        Show this message
 ```
@@ -94,22 +93,20 @@ Two keys are special cased in package.json files.
 
 #### p = parcelify( mainPath, [options] )
 
-`mainPath` is the path of the JavaScript entry point file. options are as follows:
+`mainPath` is the path of the JavaScript entry point file. Options may contin:
+
+* `bundles` - A hash that maps asset types to bundle paths. You will generally just want an entry for a `script` bundle (which is special cased for the browserify bundle) and a `style` bundle, but arbitrary asset types are supported. Default:
 
 ```javascript
-{
-    bundles : {
-      script : 'bundle.js',        // path of javascript bundle (not output if omitted)
-      style : 'bundle.css',        // path of css bundle (not output if omitted)
-      template : 'bundle.tmpl',    // path of template bundle (not output if omitted)
-    },
-    
-    browserifyInstance : undefined  // use your own instance of browserify / watchify
-    browserifyBundleOptions : {}    // passed through to browserify.bundle()
-
-    watch : false,
+bundles : {
+  script : 'bundle.js',
+  style : 'bundle.css'
 }
 ```
+* `defaultTranforms` (default: undefined) - An array of transform module names or functions to be applied when no other transforms are specified for a package. Can be used for "global" application level transforms like sass -> css.
+* `browserifyInstance` (default: undefined) - Use your own instance of browserify / watchify
+* `browserifyBundleOptions` (default: {}) - Passed through to browserify.bundle()
+* `watch` : Watch mode - automatically rebuild bundles as appropriate for changes.
 
 A parcelify object is returned, which is an event emitter.
 

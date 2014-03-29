@@ -31,6 +31,8 @@ function Parcelify( mainPath, options ) {
 			// template : 'bundle.tmpl'		// don't bundle templates by default.. against best-practices
 		},
 
+		defaultTransforms : [],
+
 		watch : false,
 
 		browserifyInstance : undefined,
@@ -92,7 +94,10 @@ Parcelify.prototype.processParcel = function( browerifyInstance, options, callba
 	var assetTypes = _.without( Object.keys( options.bundles ), 'script' );
 	var mainPath = this.mainPath;
 	var mainParcelMap;
-	var packageFilter = options.browserifyBundleOptions.packageFilter;
+	var packageFilter;
+
+	packageFilter = this._createBrowserifyPackageFilter( options.browserifyBundleOptions.packageFilter, options.defaultTransforms );
+	options.browserifyBundleOptions.packageFilter = packageFilter;
 
 	var parcelMapEmitter = parcelMap( browerifyInstance, { keys : assetTypes, packageFilter : packageFilter } );
 
@@ -151,9 +156,6 @@ Parcelify.prototype.processParcel = function( browerifyInstance, options, callba
 			return callback( null, mainParcel ); // return this parcel to our calling function via the cb
 		} );
 	} );
-	
-	// get things moving. note we need to do this after parcelMap has been called with the browserify instance
-	//jsBundleStream = browerifyInstance.bundle( options.browserifyBundleOptions ); //.pipe( through2() );
 };
 
 Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, existingPacakages, assetTypes, callback ) {
@@ -236,4 +238,34 @@ Parcelify.prototype._setupParcelEventRelays = function( parcel ) {
 	parcel.on( 'bundleUpdated', function( path, assetType ) {
 		_this.emit( 'bundleWritten', path, assetType, true );
 	} );
+};
+
+
+Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFilter, defaultTransforms ) {
+	var packageFilter = existingPackageFilter;
+
+	if( ! packageFilter ) packageFilter = function( pkg ){ return pkg; };
+
+	// make sure we have a default transforms inplace
+	function ensureDefaultTransform( pkg ) {
+		if( ! pkg.transforms ) pkg.transforms = [];
+		return pkg;
+	}
+
+	// make another transform that curries the browserify transforms to our generalized transform key
+	function curryBrowserifyTranforms( pkg ) {
+		if( pkg.browserify && pkg.browserify.transform && _.isArray( pkg.browserify.transform ) )
+			pkg.transforms = pkg.transforms.concat( pkg.browserify.transform );
+
+		return pkg;
+	}
+
+	function applyDefaultTransforms( pkg ) {
+		if( pkg.transforms.length === 0 )
+			pkg.transforms = defaultTransforms;
+
+		return pkg;
+	}
+
+	return _.compose( applyDefaultTransforms, curryBrowserifyTranforms, ensureDefaultTransform, packageFilter );
 };
