@@ -2,8 +2,8 @@
 
 Output css or other bundles based on the [browserify](http://browserify.org/) dependency graph.
 
-* Use npm packages for reusable interface components.
-* Easily include transforms for scss, less, etc. on a per-package basis.
+* Use npm packages for interface components with styles and templates.
+* Efficiently transform scss / less to css, coffee to JavaScript, etc. using streams.
 * Rebuild bundles automatically with watch mode.
 
 Many thanks to [James Halliday](https://twitter.com/substack) for his help and guidance in bringing this project into reality.
@@ -58,20 +58,22 @@ $ npm install -g parcelify
 ```
 --cssBundle, -c   Path of a destination css bundle.
 
---transform, -t   Name or path of a default transform. (See discussion of `defaultTransforms` option.)
-
 --watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.
 
 --jsBundle, -j    Path of the JavaScript bundle (i.e. browserify's output).
 
 --debug, -d       Enable source maps that allow you to debug your js files separately. (Pass-thru to browserify.)
 
+--transform, -t   Name or path of a default transform. (See discussion of `defaultTransforms` option.)
+
 --help, -h        Show this message
 ```
 
 ## Tranforms
 
-Tranforms like sass -> css can be applied to assets in individual packages using the `transforms` key in a package's package.json, or quasi-globally using the `defaultTransforms` option. The `transform` key in package.json should be an array of names or file paths of [transform modules](https://github.com/substack/module-deps#transforms). For example,
+### Package specific (local) transforms
+
+The safest and most portable way to apply transforms like sass -> css or coffee -> js is using the `transforms` key in a package's package.json. The key should be an array of names or file paths of [transform modules](https://github.com/substack/module-deps#transforms). For example,
 
 ```
 {
@@ -86,9 +88,31 @@ Tranforms like sass -> css can be applied to assets in individual packages using
 }
 ```
 
-Transforms modules are called on all assets (including JavaScript files). It is up to the module to determine whether or not it should apply itself to an asset based on the asset's file extension.
+All transform modules are called on all assets plus JavaScript files. It is up to the transform module to determine whether or not it should apply itself to a file (usually based on the file extension).
 
-NOTE: It is recommend that you rely on the `tranforms` key in package.json as opposed to the global `defaultTranforms` option whenever possible as the former make your packages far easier to consume across applications.
+### Application level (global) transforms
+
+You can apply quasi-global, application level transforms using the `defaultTransforms` option, which is an array that contains either transform module names / paths (just like the `transforms` key) or transform functions. Because globally applied transforms can easily conflict with local transforms, default transforms are only applied to packages that to not specify their own local transforms.
+
+
+```javascript
+c = parcelify( mainPath, {
+    defaultTransforms : [ 'sass-css-stream' ]
+} );
+```
+
+If you need more control over which transforms are applied to what packages, you can use the `packageTransform` option to insert transforms into the package.json of specific packages.
+
+```javascript
+c = parcelify( mainPath, {
+    packageTransform : function( pkg ) {
+        if( ! shouldApplyGlobalTransforms( pkg ) ) return pkg;
+
+        pkg.transforms = ( pkg.transforms || [] )
+            .concat( [ 'sass-scc-stream' ] );
+    }
+} );
+```
 
 ## API
 
