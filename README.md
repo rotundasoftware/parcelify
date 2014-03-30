@@ -71,7 +71,7 @@ $ npm install -g parcelify
 
 ## Tranforms
 
-Tranforms like sass -> css can be applied to assets in individual packages using the `transforms` key in a package's `package.json`, or quasi-globally using the `defaultTransforms` option. The `transform` key in `package.json` should be an array of names or file paths of [transform modules](https://github.com/substack/module-deps#transforms). For example,
+Tranforms like sass -> css can be applied to assets in individual packages using the `transforms` key in a package's package.json, or quasi-globally using the `defaultTransforms` option. The `transform` key in package.json should be an array of names or file paths of [transform modules](https://github.com/substack/module-deps#transforms). For example,
 
 ```
 {
@@ -88,23 +88,23 @@ Tranforms like sass -> css can be applied to assets in individual packages using
 
 Transforms modules are called on all assets (including JavaScript files). It is up to the module to determine whether or not it should apply itself to an asset based on the asset's file extension.
 
-It is recommend that you rely on the `tranforms` key in `package.json` as opposed to the global `defaultTranforms` option whenever possible as the former make your packages easier to consume across applications.
+NOTE: It is recommend that you rely on the `tranforms` key in package.json as opposed to the global `defaultTranforms` option whenever possible as the former make your packages far easier to consume across applications.
 
 ## API
 
 #### p = parcelify( mainPath, [options] )
 
-`mainPath` is the path of the JavaScript entry point file. Options may contin:
+`mainPath` is the path of the JavaScript entry point file. Options may contain:
 
 * `bundles` - A hash that maps asset types to bundle paths. You will generally just want an entry for a `script` bundle (which is special cased for the browserify bundle) and a `style` bundle, but arbitrary asset types are supported. Default:
 
 ```javascript
 bundles : {
-  script : 'bundle.js',  // send browserify output here
-  style : 'bundle.css'   // bundle style assets and output here
+  script : 'bundle.js',  // send browserify output here (special cased)
+  style : 'bundle.css'   // bundle `style` assets and output here
 }
 ```
-* `defaultTransforms` (default: undefined) - An array of transform module names / paths or functions to be applied when no other transforms are specified for a package. Can be used for application level transforms.
+* `defaultTransforms` (default: undefined) - An array of [transform modules](https://github.com/substack/module-deps#transforms) names / paths or functions to be applied to packages in which no local transforms are specified. Can be used for quasi-global, application level transforms (without the risk of conflicting with packages that use their own transforms).
 * `browserifyInstance` (default: undefined) - Use your own instance of browserify / watchify.
 * `browserifyBundleOptions` (default: {}) - Passed through to browserify.bundle().
 * `watch` : Watch mode - automatically rebuild bundles as appropriate for changes.
@@ -125,7 +125,7 @@ Called when a style asset is updated in watch mode. `eventType` is `'added'`, `'
 
 ## Client side templates and other assets
 
-Parcelify actually supports concatenation / enumeration of arbitrary asset types. Just add a bundle for that asset type in the `bundles` option and use the same key to enumerate assets of that type in your `package.json`.
+Parcelify actually supports concatenation / enumeration of arbitrary asset types. Just add a bundle for an asset type in the `bundles` option and use the same key to enumerate assets of that type in package.json.
 
 A tempting use case for this feature is client side templates - just include a `template` key in package.json and a corresponding entry in the `bundles` option, and you have a bundle of client side templates. However, if you plan to share your packages we recommend against this practice as it makes your packages difficult to consume. Instead we recommend using a browserify transform like [node-hbsfy](https://github.com/epeli/node-hbsfy) or [nunjucksify](https://github.com/rotundasoftware/nunjucksify) to precompile templates and `require` them explicitly from your JavaScript files.
 
