@@ -106,7 +106,7 @@ bundles : {
 ```
 * `defaultTransforms` (default: undefined) - An array of [transform modules](https://github.com/substack/module-deps#transforms) names / paths or functions to be applied to packages in which no local transforms are specified. Can be used for quasi-global transforms (without the risk of conflicting with packages that use their own transforms).
 * `browserifyInstance` (default: undefined) - Use your own instance of browserify / watchify.
-* `browserifyBundleOptions` (default: {}) - Passed through to browserify.bundle().
+* `browserifyBundleOptions` (default: {}) - Passed through directly to browserify.bundle().
 * `watch` : Watch mode - automatically rebuild bundles as appropriate for changes.
 
 A parcelify object is returned, which is an event emitter.
