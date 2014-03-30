@@ -32,7 +32,8 @@ function Parcelify( mainPath, options ) {
 		},
 
 		defaultTransforms : [],
-
+		packageTransform : undefined,
+		
 		watch : false,
 
 		browserifyInstance : undefined,
@@ -96,7 +97,7 @@ Parcelify.prototype.processParcel = function( browerifyInstance, options, callba
 	var mainParcelMap;
 	var packageFilter;
 
-	packageFilter = this._createBrowserifyPackageFilter( options.browserifyBundleOptions.packageFilter, options.defaultTransforms );
+	packageFilter = this._createBrowserifyPackageFilter( options.packageTransform, options.defaultTransforms );
 	options.browserifyBundleOptions.packageFilter = packageFilter;
 
 	var parcelMapEmitter = parcelMap( browerifyInstance, { keys : assetTypes, packageFilter : packageFilter } );
