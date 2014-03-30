@@ -58,11 +58,11 @@ $ npm install -g parcelify
 ```
 --cssBundle, -c   Path of a destination css bundle.
 
---watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.
-
 --jsBundle, -j    Path of the JavaScript bundle (i.e. browserify's output).
 
---debug, -d       Enable source maps that allow you to debug your js files separately. (Pass-thru to browserify.)
+--watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.
+
+--maps, -m        Enable JavaScript source maps in js bundles (for dev mode).
 
 --transform, -t   Name or path of a default transform. (See discussion of `defaultTransforms` option.)
 

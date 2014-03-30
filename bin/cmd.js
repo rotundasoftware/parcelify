@@ -12,7 +12,7 @@ var argv = minimist( process.argv.slice(2),
 			cssBundle : "c",
 			tmplBundle : "t",
 			watch : "w",
-			debug : "d",
+			maps : "m",
 			help : "h"
 		},
 		boolean : [ "watch", "help", "debug" ]
@@ -31,7 +31,7 @@ var cssBundle = resolvePath( argv.cssBundle );
 var tmplBundle = resolvePath( argv.tmplBundle );
 var mainPath = resolvePath( argv._[0] );
 var watch = argv.watch;
-var debug = argv.debug;
+var maps = argv.maps;
 
 if( ! mainPath ) {
 	console.log( "No entry point specified" );
@@ -45,7 +45,7 @@ var p = parcelify( mainPath, {
 		template : tmplBundle
 	},
 	browserifyBundleOptions : {
-		debug : debug
+		debug : maps
 	},
 	watch : watch
 } );
