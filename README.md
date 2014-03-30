@@ -92,13 +92,11 @@ All transform modules are called on all assets plus JavaScript files. It is up t
 
 ### Application level (global) transforms
 
-You can apply quasi-global, application level transforms using the `defaultTransforms` option, which is an array that contains either transform module names / paths (just like the `transforms` key) or transform functions. Because globally applied transforms can easily conflict with local transforms, default transforms are only applied to packages that to not specify their own local transforms.
+You can apply quasi-global, application level transforms using the `defaultTransforms` option. Because globally applied transforms can easily conflict with local transforms, default transforms are only applied to packages that to not specify their own local transforms.
 
 
-```javascript
-c = parcelify( mainPath, {
-    defaultTransforms : [ 'sass-css-stream' ]
-} );
+```
+$ parcelify main.js -c bundle.css -t "sass-css-stream"
 ```
 
 If you need more control over which transforms are applied to what packages, you can use the `packageTransform` option to insert transforms into the package.json of specific packages.
