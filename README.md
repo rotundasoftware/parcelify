@@ -71,7 +71,7 @@ $ npm install -g parcelify
 
 ## Tranforms
 
-### Package specific (local) transforms
+### Local (package specific) transforms
 
 The safest and most portable way to apply transforms like sass -> css or coffee -> js is using the `transforms` key in a package's package.json. The key should be an array of names or file paths of [transform modules](https://github.com/substack/module-deps#transforms). For example,
 
@@ -98,8 +98,7 @@ You can apply quasi-global, application level transforms using the `defaultTrans
 $ parcelify main.js -c bundle.css -t "sass-css-stream"
 ```
 
-Because application level transforms can easily conflict with local transforms, default transforms are only applied to packages that to not specify their own local transforms. If you need more control over which application level transforms are applied to what packages, you can use the `packageTransform` option to insert transforms into the package.json of specific packages.
-
+Because such application level transforms can easily conflict with local transforms, the transforms in `defaultTransforms` are only applied to packages that to not have their own local transforms. If you need more control over which application level transforms are applied to what packages, you can use the `packageTransform` option to insert transforms into the package.json of specific packages.
 
 ```javascript
 c = parcelify( mainPath, {
