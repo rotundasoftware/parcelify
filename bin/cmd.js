@@ -10,12 +10,12 @@ var argv = minimist( process.argv.slice(2),
 		alias : {
 			jsBundle : "j",
 			cssBundle : "c",
-			tmplBundle : "t",
+			transform : "t",
 			watch : "w",
 			maps : "m",
 			help : "h"
 		},
-		boolean : [ "watch", "help", "debug" ]
+		boolean : [ "watch", "help", "maps" ]
 	}
 );
 
@@ -30,6 +30,7 @@ var jsBundle = resolvePath( argv.jsBundle );
 var cssBundle = resolvePath( argv.cssBundle );
 var tmplBundle = resolvePath( argv.tmplBundle );
 var mainPath = resolvePath( argv._[0] );
+var defaultTransforms = argv.transform;
 var watch = argv.watch;
 var maps = argv.maps;
 
@@ -44,6 +45,7 @@ var p = parcelify( mainPath, {
 		style : cssBundle,
 		template : tmplBundle
 	},
+	defaultTransforms : defaultTransforms,
 	browserifyBundleOptions : {
 		debug : maps
 	},
