@@ -98,7 +98,7 @@ You can apply quasi-global, application level transforms using the `defaultTrans
 $ parcelify main.js -c bundle.css -t "sass-css-stream"
 ```
 
-Because globally applied transforms can easily conflict with local transforms, default transforms are only applied to packages that to not specify their own local transforms. If you need more control over which app level transforms are applied to what packages, you can use the `packageTransform` option to insert transforms into the package.json of specific packages.
+Because application level transforms can easily conflict with local transforms, default transforms are only applied to packages that to not specify their own local transforms. If you need more control over which application level transforms are applied to what packages, you can use the `packageTransform` option to insert transforms into the package.json of specific packages.
 
 
 ```javascript
