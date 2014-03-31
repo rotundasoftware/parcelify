@@ -99,12 +99,12 @@ You can apply quasi-global, application level transforms using the `defaultTrans
 $ parcelify main.js -c bundle.css -t "sass-css-stream"
 ```
 
-If you need more control over which transforms are applied to what packages, you can use the `packageTransform` option to insert transforms into the package.json of specific packages.
+If you need more control over which app level transforms are applied to what packages, you can use the `packageTransform` option to insert transforms into the package.json of specific packages.
 
 ```javascript
 c = parcelify( mainPath, {
     packageTransform : function( pkg ) {
-        if( ! shouldApplyGlobalTransforms( pkg ) ) return pkg;
+        if( ! shouldApplyAppTransforms( pkg ) ) return pkg;
 
         pkg.transforms = ( pkg.transforms || [] )
             .concat( [ 'sass-scc-stream' ] );
