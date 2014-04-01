@@ -21,7 +21,8 @@
     "globwatcher": "~1.2.2",
     "resolve": "~0.6.1",
     "stream-combiner": "0.0.4",
-    "minimist": "0.0.8"
+    "minimist": "0.0.8",
+    "colors": "~0.6.2"
   },
   "devDependencies": {
     "tape": "~2.3.2",
