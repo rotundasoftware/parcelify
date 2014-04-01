@@ -11,6 +11,7 @@ var glob = require( 'glob' );
 var Package = require( './lib/package' );
 var Parcel = require( './lib/parcel' );
 var inherits = require( 'inherits' );
+var colors = require( 'colors' );
 
 var EventEmitter = require('events').EventEmitter;
 var Package = require('./lib/package.js');
@@ -58,10 +59,8 @@ function Parcelify( mainPath, options ) {
 
 		var existingPackages = options.existingPackages || {};
 
-		_this.on( 'packageCreated', function( thisPackage, isMainParcel ) {
-			existingPackages[ thisPackage.id ] = thisPackage;
-			if( isMainParcel )
-				_this._setupParcelEventRelays( thisPackage );
+		_this.on( 'error', function( err ) {
+			console.log( 'Error: '.red + err.message ); // otherwise errors kill our watch task. Especially bad for transform errors
 		} );
 
 		if( options.watch ) {
@@ -73,14 +72,14 @@ function Parcelify( mainPath, options ) {
 					newOptions.existingPackages = existingPackages;
 
 					_this.processParcel( browerifyInstance, newOptions, function( err, parcel ) {
-						if( err ) return _this.emit( 'error', err );
+						_this.emit( 'error', err );
 					} );
 				}
 			}, 1000, true ) );
 		}
 
 		_this.processParcel( browerifyInstance, options, function( err, parcel ) {
-			if( err ) return _this.emit( 'error', err );
+			if( err ) _this.emit( 'error', err );
 		} );
 	} );
 
@@ -131,14 +130,37 @@ Parcelify.prototype.processParcel = function( browerifyInstance, options, callba
 			process.nextTick( function() {
 				async.series( [ function( nextSeries ) {
 					// fire package events for any new packages
-					_.each( packagesThatWereCreated, function( thisPackage ) { _this.emit( 'packageCreated', thisPackage, thisPackage === mainParcel ); } );
+					_.each( packagesThatWereCreated, function( thisPackage ) {
+						var isMainParcel = thisPackage === mainParcel;
+
+						existingPackages[ thisPackage.id ] = thisPackage;
+						if( isMainParcel ) _this._setupParcelEventRelays( thisPackage );
+
+						thisPackage.on( 'error', function( err ) {
+							_this.emit( 'error', err );
+						} );
+
+						_this.emit( 'packageCreated', thisPackage, isMainParcel );
+					} );
 
 					nextSeries();
 				}, function( nextSeries ) {
 					// we are done copying packages and collecting our asset streams. Now write our bundles to disk.
-					mainParcel.writeBundles( options.bundles, nextSeries );
+					async.each( Object.keys( options.bundles ), function( thisAssetType, nextEach ) {
+						var thisBundlePath = options.bundles[ thisAssetType ];
+						if( ! thisBundlePath ) return nextEach();
+					
+						mainParcel.writeBundle( thisAssetType, thisBundlePath, function( err ) {
+							// don't stop writing other bundles if there was an error on this one. errors happen
+							// frequently with transforms.. like invalid scss, etc. don't stop the show, just 
+							// keep going with our other bundles.
 
-					_.each( options.bundles, function( path, assetType ) { _this.emit( 'bundleWritten', path, assetType, _this.watching ); } );
+							if( err ) _this.emit( 'error', err );
+							else _this.emit( 'bundleWritten', thisBundlePath, thisAssetType, _this.watching );
+
+							nextEach();
+						} );
+					}, nextSeries );
 				}, function( nextSeries ) {
 					var mainParcelIsNew = _.contains( packagesThatWereCreated, mainParcel );
 					if( options.watch ) {
@@ -151,7 +173,7 @@ Parcelify.prototype.processParcel = function( browerifyInstance, options, callba
 					if( mainParcelIsNew ) _this.emit( 'done' );
 
 					nextSeries();
-				} ] );
+				} ], callback );
 			} );
 
 			return callback( null, mainParcel ); // return this parcel to our calling function via the cb
