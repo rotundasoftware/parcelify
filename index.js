@@ -10,6 +10,7 @@ var async = require( 'async' );
 var glob = require( 'glob' );
 var Package = require( './lib/package' );
 var Parcel = require( './lib/parcel' );
+var parcelDetector = require( 'parcel-detector' );
 var inherits = require( 'inherits' );
 var colors = require( 'colors' );
 
@@ -60,7 +61,7 @@ function Parcelify( mainPath, options ) {
 		var existingPackages = options.existingPackages || {};
 
 		_this.on( 'error', function( err ) {
-			console.log( 'Error: '.red + err.message ); // otherwise errors kill our watch task. Especially bad for transform errors
+			console.log( 'Error: '.red + err ); // otherwise errors kill our watch task. Especially bad for transform errors
 		} );
 
 		if( options.watch ) {
@@ -166,7 +167,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 					if( options.watch ) {
 						// we only create glob watchers for the packages that parcel added to the manifest. Again, we want to avoid doubling up
 						// work in situations where we have multiple parcelify instances running that share common bundles
-						_.each( packagesThatWereCreated, function( thisPackage ) { thisPackage.createWatchers( assetTypes ); } );
+						_.each( packagesThatWereCreated, function( thisPackage ) { thisPackage.createWatchers( assetTypes, options.packageTransform ); } );
 						if( mainParcelIsNew ) mainParcel.attachWatchListeners( options.bundles );
 					}
 
@@ -197,8 +198,8 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 				var thisPackage;
 
 				var thisIsTheTopLevelParcel = packageJson.__isMain;
-				var thisPackageIsAParcel = thisIsTheTopLevelParcel || packageOptions.view;
-			
+				var thisPackageIsAParcel = thisIsTheTopLevelParcel || parcelDetector.isParcel( packageJson, packageJson.__path );
+				
 				if( ! existingPacakages[ thisPackageId ] ) {
 					if( thisPackageIsAParcel ) {
 						if( thisIsTheTopLevelParcel ) {
@@ -269,26 +270,23 @@ Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFi
 
 	if( ! packageFilter ) packageFilter = function( pkg ){ return pkg; };
 
-	// make sure we have a default transforms inplace
-	function ensureDefaultTransform( pkg ) {
-		if( ! pkg.transforms ) pkg.transforms = [];
-		return pkg;
-	}
-
-	// make another transform that curries the browserify transforms to our generalized transform key
-	function curryBrowserifyTranforms( pkg ) {
-		if( pkg.browserify && pkg.browserify.transform && _.isArray( pkg.browserify.transform ) )
-			pkg.transforms = pkg.transforms.concat( pkg.browserify.transform );
-
-		return pkg;
-	}
-
 	function applyDefaultTransforms( pkg ) {
-		if( pkg.transforms.length === 0 )
+		if( ! pkg.transforms || pkg.transforms.length === 0 && defaultTransforms )
 			pkg.transforms = defaultTransforms;
 
 		return pkg;
 	}
 
-	return _.compose( applyDefaultTransforms, curryBrowserifyTranforms, ensureDefaultTransform, packageFilter );
+	// make another transform that curries the browserify transforms to our generalized transform key
+	function curryTranformsToBrowserify( pkg ) {
+		if( pkg.transforms && _.isArray( pkg.transforms ) ) {
+			if( ! pkg.browserify ) pkg.browserify = {};
+			if( ! pkg.browserify.transform ) pkg.browserify.transform = [];
+			pkg.browserify.transform = pkg.transforms.concat( pkg.browserify.transform );
+		}
+
+		return pkg;
+	}
+
+	return _.compose( curryTranformsToBrowserify, applyDefaultTransforms, packageFilter );
 };
