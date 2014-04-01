@@ -5,7 +5,7 @@ Output css or other bundles based on the [browserify](http://browserify.org/) de
 * Use npm packages for interface components with styles and templates.
 * Efficiently transform scss / less to css, coffee to JavaScript, etc. using streams.
 * Rebuild bundles automatically with watch mode.
-* Integrate into full asset pipelines via a robust API (see [cartero](https://github.com/rotundasoftware/cartero)).
+* Leverage a robust API to build even cooler libraries like [cartero](https://github.com/rotundasoftware/cartero).
 
 Many thanks to [James Halliday](https://twitter.com/substack) for his help and guidance in bringing this project into reality.
 
