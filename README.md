@@ -5,6 +5,7 @@ Output css or other bundles based on the [browserify](http://browserify.org/) de
 * Use npm packages for interface components with styles and templates.
 * Efficiently transform scss / less to css, coffee to JavaScript, etc. using streams.
 * Rebuild bundles automatically with watch mode.
+* Integrate into full asset pipelines via a robust API (see [cartero](https://github.com/rotundasoftware/cartero)).
 
 Many thanks to [James Halliday](https://twitter.com/substack) for his help and guidance in bringing this project into reality.
 
@@ -151,7 +152,7 @@ Parcelify actually supports concatenation / enumeration of arbitrary asset types
 
 A tempting use case for this feature is client side templates - just include a `template` key in package.json and a corresponding entry in the `bundles` option, and you have a bundle of client side templates. However, if you plan to share your packages we recommend against this practice as it makes your packages difficult to consume. Instead we recommend using a browserify transform like [node-hbsfy](https://github.com/epeli/node-hbsfy) or [nunjucksify](https://github.com/rotundasoftware/nunjucksify) to precompile templates and `require` them explicitly from your JavaScript files.
 
-For the case of assets like images, that do not need to be concatenated, you can specify a `null` path for the bundle. Parcelify will collect all assets of that type but not concatenate them. You can then process the individual assets further using the event callbacks.
+For the case of assets like images, that do not need to be concatenated, you can specify a `null` path for the bundle. Parcelify will collect all assets of that type but not concatenate them. You can then process the individual assets further using the event callbacks. See [cartero](https://github.com/rotundasoftware/cartero) for an example of how to further process individual assets.
 
 ## Contributors
 
