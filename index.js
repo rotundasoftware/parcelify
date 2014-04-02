@@ -47,14 +47,14 @@ function Parcelify( mainPath, options ) {
 	this.mainPath = mainPath;
 	this.watching = false;
 
-	var browerifyInstance;
+	var browserifyInstance;
 
 	// before we jump the gun, return from this function so we can listen to events from the calling function
 	process.nextTick( function() {
-		if( options.browserifyInstance ) browerifyInstance = options.browerifyInstance;
+		if( options.browserifyInstance ) browserifyInstance = options.browserifyInstance;
 		else {
-			browerifyInstance = options.watch ? watchify( mainPath ) : browserify( mainPath );
-			_this.emit( 'browerifyInstanceCreated', browerifyInstance );
+			browserifyInstance = options.watch ? watchify( mainPath ) : browserify( mainPath );
+			_this.emit( 'browserifyInstanceCreated', browserifyInstance );
 		}
 
 		var existingPackages = options.existingPackages || {};
@@ -64,21 +64,21 @@ function Parcelify( mainPath, options ) {
 		} );
 
 		if( options.watch ) {
-			browerifyInstance.on( 'update', _.debounce( function( changedMains ) {
+			browserifyInstance.on( 'update', _.debounce( function( changedMains ) {
 				_this.watching = true;
 
 				if( _.contains( changedMains, _this.mainPath ) ) { // I think this should always be the case
 					var newOptions = _.clone( options );
 					newOptions.existingPackages = existingPackages;
 
-					_this.processParcel( browerifyInstance, newOptions, function( err, parcel ) {
+					_this.processParcel( browserifyInstance, newOptions, function( err, parcel ) {
 						_this.emit( 'error', err );
 					} );
 				}
 			}, 1000, true ) );
 		}
 
-		_this.processParcel( browerifyInstance, options, function( err, parcel ) {
+		_this.processParcel( browserifyInstance, options, function( err, parcel ) {
 			if( err ) _this.emit( 'error', err );
 		} );
 	} );
@@ -86,7 +86,7 @@ function Parcelify( mainPath, options ) {
 	return _this;
 }
 
-Parcelify.prototype.processParcel = function( browerifyInstance, options, callback ) {
+Parcelify.prototype.processParcel = function( browserifyInstance, options, callback ) {
 	var _this = this;
 	var jsBundleContents;
 
@@ -99,7 +99,7 @@ Parcelify.prototype.processParcel = function( browerifyInstance, options, callba
 	packageFilter = this._createBrowserifyPackageFilter( options.packageTransform, options.defaultTransforms );
 	options.browserifyBundleOptions.packageFilter = packageFilter;
 
-	var parcelMapEmitter = parcelMap( browerifyInstance, { keys : assetTypes, packageFilter : packageFilter } );
+	var parcelMapEmitter = parcelMap( browserifyInstance, { keys : assetTypes, packageFilter : packageFilter } );
 
 	async.parallel( [ function( nextParallel ) {
 		parcelMapEmitter.on( 'error', function( err ) {
@@ -111,7 +111,7 @@ Parcelify.prototype.processParcel = function( browerifyInstance, options, callba
 			nextParallel();
 		} );
 	}, function( nextParallel ) {
-		browerifyInstance.bundle( options.browserifyBundleOptions, function( err, res ) {
+		browserifyInstance.bundle( options.browserifyBundleOptions, function( err, res ) {
 			if( err ) return nextParallel( err );
 
 			jsBundleContents = res;
