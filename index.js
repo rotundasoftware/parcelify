@@ -10,7 +10,7 @@ var async = require( 'async' );
 var glob = require( 'glob' );
 var Package = require( './lib/package' );
 var Parcel = require( './lib/parcel' );
-var parcelDetector = require( 'parcel-detector' );
+var parcelFinder = require( 'parcel-finder' );
 var inherits = require( 'inherits' );
 var log = require( 'npmlog' );
 
@@ -215,7 +215,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 				var thisPackage;
 
 				var thisIsTheTopLevelParcel = packageJson.__isMain;
-				var thisPackageIsAParcel = thisIsTheTopLevelParcel || parcelDetector.isParcel( packageJson, packageJson.__path );
+				var thisPackageIsAParcel = thisIsTheTopLevelParcel || parcelFinder.isParcel( packageJson, packageJson.__path );
 
 				if( ! existingPacakages[ thisPackageId ] ) {
 					if( thisPackageIsAParcel ) {

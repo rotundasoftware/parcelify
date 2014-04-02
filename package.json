@@ -19,11 +19,11 @@
     "toposort": "~0.2.10",
     "watchify": "~0.6.1",
     "globwatcher": "~1.2.2",
-    "parcel-detector": "~0.1.0",
     "resolve": "~0.6.1",
     "stream-combiner": "0.0.4",
     "minimist": "0.0.8",
-    "npmlog": "0.0.6"
+    "npmlog": "0.0.6",
+    "parcel-finder": "~0.2.1"
   },
   "devDependencies": {
     "tape": "~2.3.2",
