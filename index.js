@@ -12,7 +12,7 @@ var Package = require( './lib/package' );
 var Parcel = require( './lib/parcel' );
 var parcelDetector = require( 'parcel-detector' );
 var inherits = require( 'inherits' );
-var colors = require( 'colors' );
+var log = require( 'npmlog' );
 
 var EventEmitter = require('events').EventEmitter;
 var Package = require('./lib/package.js');
@@ -59,27 +59,33 @@ function Parcelify( mainPath, options ) {
 		}
 
 		var existingPackages = options.existingPackages || {};
+		var mappedAssets = {};
 
 		_this.on( 'error', function( err ) {
-			console.log( 'Error: '.red + err ); // otherwise errors kill our watch task. Especially bad for transform errors
+			log.error( '', err ); // otherwise errors kill our watch task. Especially bad for transform errors
 		} );
 
 		if( options.watch ) {
 			browserifyInstance.on( 'update', _.debounce( function( changedMains ) {
 				_this.watching = true;
 
-				if( _.contains( changedMains, _this.mainPath ) ) { // I think this should always be the case
-					var newOptions = _.clone( options );
-					newOptions.existingPackages = existingPackages;
+				// if( _.contains( changedMains, _this.mainPath ) ) { // I think this should always be the case. nevermind, changeMains contains javascript files that have changed (?)
+					var processParcelOptions = _.clone( options );
+					processParcelOptions.existingPackages = existingPackages;
+					processParcelOptions.mappedAssets = mappedAssets;
 
-					_this.processParcel( browserifyInstance, newOptions, function( err, parcel ) {
-						_this.emit( 'error', err );
+					_this.processParcel( browserifyInstance, processParcelOptions, function( err, parcel ) {
+						if( err ) _this.emit( 'error', err );
 					} );
-				}
+				// }
 			}, 1000, true ) );
 		}
 
-		_this.processParcel( browserifyInstance, options, function( err, parcel ) {
+		var processParcelOptions = _.clone( options );
+		processParcelOptions.existingPackages = existingPackages;
+		processParcelOptions.mappedAssets = mappedAssets;
+
+		_this.processParcel( browserifyInstance, processParcelOptions, function( err, parcel ) {
 			if( err ) _this.emit( 'error', err );
 		} );
 	} );
@@ -92,6 +98,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 	var jsBundleContents;
 
 	var existingPackages = options.existingPackages || {};
+	var existingAssets = options.existingPackages || {};
 	var assetTypes = _.without( Object.keys( options.bundles ), 'script' );
 	var mainPath = this.mainPath;
 	var mainParcelMap;
@@ -100,7 +107,17 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 	packageFilter = this._createBrowserifyPackageFilter( options.packageTransform, options.defaultTransforms );
 	options.browserifyBundleOptions.packageFilter = packageFilter;
 
-	var parcelMapEmitter = parcelMap( browserifyInstance, { keys : assetTypes, packageFilter : packageFilter } );
+	var packages = _.reduce( existingAssets, function( memo, thisPackage, thisPackageId ) {
+		memo[ thisPackage.path ] = thisPackage.package;
+		return memo;
+	}, [] );
+
+	var parcelMapEmitter = parcelMap( browserifyInstance, {
+		keys : assetTypes,
+		files : options.mappedAssets,
+		packages : packages,
+		packageFilter : packageFilter
+	} );
 
 	async.parallel( [ function( nextParallel ) {
 		parcelMapEmitter.on( 'error', function( err ) {
@@ -113,7 +130,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 		} );
 	}, function( nextParallel ) {
 		browserifyInstance.bundle( options.browserifyBundleOptions, function( err, res ) {
-			if( err ) return nextParallel( err );
+			if( err ) return nextParallel( new Error( 'Error while browserifying "' + mainPath + '":' + err ) );
 
 			jsBundleContents = res;
 			nextParallel();
@@ -171,7 +188,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 						if( mainParcelIsNew ) mainParcel.attachWatchListeners( options.bundles );
 					}
 
-					if( mainParcelIsNew ) _this.emit( 'done' );
+					if( ! _this.watching ) _this.emit( 'done' );
 
 					nextSeries();
 				} ], callback );
@@ -191,7 +208,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 		async.each( Object.keys( parcelMap.packages ), function( thisPackageId, nextPackageId ) {
 			var packageJson = parcelMap.packages[ thisPackageId ];
 			var packageOptions = {};
-			
+
 			async.waterfall( [ function( nextWaterfall ) {
 				Package.getOptionsFromPackageJson( thisPackageId, packageJson.__path, packageJson, assetTypes, nextWaterfall );
 			}, function( packageOptions, nextWaterfall ) {
@@ -199,7 +216,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 
 				var thisIsTheTopLevelParcel = packageJson.__isMain;
 				var thisPackageIsAParcel = thisIsTheTopLevelParcel || parcelDetector.isParcel( packageJson, packageJson.__path );
-				
+
 				if( ! existingPacakages[ thisPackageId ] ) {
 					if( thisPackageIsAParcel ) {
 						if( thisIsTheTopLevelParcel ) {
@@ -223,24 +240,22 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 	}, function( nextSeries ) {
 		if( ! mappedParcel ) return callback( new Error( 'Could not locate this mapped parcel id.' ) );
 
-		var allPackagesRelevantToThisParcel = _.extend( existingPacakages, packagesThatWereCreated );
+		var allPackages = _.extend( {}, existingPacakages, packagesThatWereCreated );
 
 		// now that we have all our packages instantiated, hook up dependencies
 		_.each( parcelMap.dependencies, function( dependencyIds, thisPackageId ) {
-			var thisPackage = allPackagesRelevantToThisParcel[ thisPackageId ];
-			var thisPackageDependencies = _.map( dependencyIds, function( thisDependencyId ) { return allPackagesRelevantToThisParcel[ thisDependencyId ]; } );
+			var thisPackage = allPackages[ thisPackageId ];
+			var thisPackageDependencies = _.map( dependencyIds, function( thisDependencyId ) { return allPackages[ thisDependencyId ]; } );
 			thisPackage.setDependencies( thisPackageDependencies );
-		} );
-
-		_.each( allPackagesRelevantToThisParcel, function( thisPackage ) {
-			if( thisPackage === mappedParcel ) return; // debatable whether or not it makes sense semantically to include a parcel as a dependent of itself.
-
-			thisPackage.addDependentParcel( mappedParcel );
 		} );
 
 		// finally, we can calculate the topo sort of all the dependencies and assets in the parcel
 		mappedParcel.calcSortedDependencies();
 		mappedParcel.calcParcelAssets( assetTypes );
+
+		_.each( mappedParcel.sortedDependencies, function( thisPackage ) {
+			thisPackage.addDependentParcel( mappedParcel );
+		} );
 
 		nextSeries();
 	} ], function( err ) {
@@ -271,7 +286,7 @@ Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFi
 	if( ! packageFilter ) packageFilter = function( pkg ){ return pkg; };
 
 	function applyDefaultTransforms( pkg ) {
-		if( ! pkg.transforms || pkg.transforms.length === 0 && defaultTransforms )
+		if( ( ! pkg.transforms || pkg.transforms.length === 0 ) && defaultTransforms )
 			pkg.transforms = defaultTransforms;
 
 		return pkg;
@@ -282,6 +297,7 @@ Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFi
 		if( pkg.transforms && _.isArray( pkg.transforms ) ) {
 			if( ! pkg.browserify ) pkg.browserify = {};
 			if( ! pkg.browserify.transform ) pkg.browserify.transform = [];
+
 			pkg.browserify.transform = pkg.transforms.concat( pkg.browserify.transform );
 		}
 

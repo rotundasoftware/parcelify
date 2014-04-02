@@ -11,7 +11,7 @@
     "through2": "~0.4.1",
     "parcel-map": "~1.1.2",
     "shasum": "~1.0.0",
-    "browserify": "~3.30.2",
+    "browserify": "~3.38.0",
     "inherits": "~2.0.1",
     "underscore": "~1.6.0",
     "async": "~0.2.10",
@@ -23,7 +23,7 @@
     "resolve": "~0.6.1",
     "stream-combiner": "0.0.4",
     "minimist": "0.0.8",
-    "colors": "~0.6.2"
+    "npmlog": "0.0.6"
   },
   "devDependencies": {
     "tape": "~2.3.2",
