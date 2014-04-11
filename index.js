@@ -39,6 +39,7 @@ function Parcelify( mainPath, options ) {
 		watch : false,
 
 		browserifyInstance : undefined,
+		browserifyOptions : {},
 		browserifyBundleOptions : {},
 
 		// used internally or in order to share packages between multiple parcelify instances
@@ -54,7 +55,8 @@ function Parcelify( mainPath, options ) {
 	process.nextTick( function() {
 		if( options.browserifyInstance ) browserifyInstance = options.browserifyInstance;
 		else {
-			browserifyInstance = options.watch ? watchify( mainPath ) : browserify( mainPath );
+			var browserifyOptions = _.extend( {}, options.browserifyOptions, { entries : mainPath } );
+			browserifyInstance = options.watch ? watchify( browserifyOptions ) : browserify( browserifyOptions );
 			_this.emit( 'browserifyInstanceCreated', browserifyInstance );
 		}
 
