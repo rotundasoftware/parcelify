@@ -33,7 +33,9 @@ function Parcelify( mainPath, options ) {
 			// template : 'bundle.tmpl'		// don't bundle templates by default.. against best-practices
 		},
 
-		defaultTransforms : [],
+		appTranforms : [],
+		appTranformDirs : [],
+
 		packageTransform : undefined,
 		
 		watch : false,
@@ -106,7 +108,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 	var mainParcelMap;
 	var packageFilter;
 
-	packageFilter = this._createBrowserifyPackageFilter( options.packageTransform, options.defaultTransforms );
+	packageFilter = this._createBrowserifyPackageFilter( options.packageTransform, options.appTranforms, options.appTranformDirs );
 	options.browserifyBundleOptions.packageFilter = packageFilter;
 
 	var packages = _.reduce( existingAssets, function( memo, thisPackage, thisPackageId ) {
@@ -282,14 +284,16 @@ Parcelify.prototype._setupParcelEventRelays = function( parcel ) {
 };
 
 
-Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFilter, defaultTransforms ) {
+Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFilter, appTranforms, appTranformDirs ) {
 	var packageFilter = existingPackageFilter;
 
 	if( ! packageFilter ) packageFilter = function( pkg ){ return pkg; };
 
-	function applyDefaultTransforms( pkg ) {
-		if( ( ! pkg.transforms || pkg.transforms.length === 0 ) && defaultTransforms )
-			pkg.transforms = defaultTransforms;
+	function applyDefaultTransforms( pkg, path ) {
+		if( appTranforms ) {
+			var pkgIsInAppTranformsDir = path.resolve( appTranformDirs, path ) !== path;
+			pkg.transforms = appTranforms.concat( pkg.tranforms || [] );
+		}
 
 		return pkg;
 	}

@@ -11,7 +11,7 @@
     "through2": "~0.4.1",
     "parcel-map": "~1.1.2",
     "shasum": "~1.0.0",
-    "browserify": "~3.38.0",
+    "browserify": "~3.41.0",
     "inherits": "~2.0.1",
     "underscore": "~1.6.0",
     "async": "~0.2.10",
