@@ -86,7 +86,7 @@ The safest and most portable way to apply transforms like sass -> css or coffee 
   "style" : "*.scss",
   "transforms" : [ "sass-css-stream" ],
   "dependencies" : {
-    "sass-css-stream": "0.0.1"
+    "sass-css-stream": "~0.0.1"
   }
 }
 ```
@@ -95,7 +95,7 @@ All transform modules are called on all assets plus JavaScript files. It is up t
 
 ### Application level transforms
 
-You can apply transforms to all packages within an entire branch of the directory tree (e.g. your entire app directory) using the `appTransforms` and `appTransformDirs` options or their corresponding command line arguments. This feature is useful to apply transforms like coffee -> js or image compression to all packages in your application. Packages inside a `node_modules` folder located inside one of the supplied directories are not effected.
+You can apply transforms to all packages within an entire branch of the directory tree (e.g. your entire app directory) using the `appTransforms` and `appTransformDirs` options or their corresponding command line arguments. Packages inside a `node_modules` folder located inside one of the supplied directories are not effected.
 
 ```
 $ parcelify main.js -c bundle.css -t "sass-css-stream" -transformDir "."
