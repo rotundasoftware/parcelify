@@ -278,8 +278,8 @@ Parcelify.prototype._setupParcelEventRelays = function( parcel ) {
 		} );
 	} );
 
-	parcel.on( 'bundleUpdated', function( path, assetType ) {
-		_this.emit( 'bundleWritten', path, assetType, true );
+	parcel.on( 'bundleUpdated', function( bundlePath, assetType ) {
+		_this.emit( 'bundleWritten', bundlePath, assetType, true );
 	} );
 };
 
@@ -287,12 +287,20 @@ Parcelify.prototype._setupParcelEventRelays = function( parcel ) {
 Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFilter, appTranforms, appTranformDirs ) {
 	var packageFilter = existingPackageFilter;
 
-	if( ! packageFilter ) packageFilter = function( pkg ){ return pkg; };
+	if( ! packageFilter ) packageFilter = function( pkg, dirPath ){ return pkg; };
 
-	function applyDefaultTransforms( pkg, path ) {
+	function applyAppTransforms( pkg, dirPath ) {
 		if( appTranforms ) {
-			var pkgIsInAppTranformsDir = path.resolve( appTranformDirs, path ) !== path;
-			pkg.transforms = appTranforms.concat( pkg.tranforms || [] );
+			var pkgIsInAppTranformsDir = _.find( appTranformDirs, function( thisAppDirPath ) {
+				var relPath = path.relative( thisAppDirPath, dirPath );
+				console.log( relPath );
+				var needToBackup = relPath.charAt( 0 ) === '.' && relPath.charAt( 1 ) === '.';
+				var appTransformsApplyToThisDir = ! needToBackup && relPath.indexOf( 'node_modules' ) === -1;
+				return appTransformsApplyToThisDir;
+			} );
+
+			if( pkgIsInAppTranformsDir )
+				pkg.transforms = appTranforms.concat( pkg.tranforms || [] );
 		}
 
 		return pkg;
@@ -310,5 +318,11 @@ Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFi
 		return pkg;
 	}
 
-	return _.compose( curryTranformsToBrowserify, applyDefaultTransforms, packageFilter );
+	return function( pkg, dirPath ) {
+		if( existingPackageFilter ) pkg = existingPackageFilter( pkg, dirPath );
+		pkg = applyAppTransforms( pkg, dirPath );
+		pkg = curryTranformsToBrowserify( pkg, dirPath );
+
+		return pkg;
+	};
 };
