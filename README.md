@@ -117,7 +117,7 @@ bundles : {
 ```
 * `appTransforms` (default: undefined) - An array of [transform modules](https://github.com/substack/module-deps#transforms) names / paths or functions to be applied to all packages in directories in the `appTransformDirs` array.
 * `appTransformDirs` (default: undefined) - `appTransforms` are applied to any packages that are within one of the directories in this array. (The recursive search is stopped on `node_module` directories.)
-* `packageTransform` (default: undefined) - A function that transforms package.json files before they are used. The function should be of the signature `function( pkgJson )` and return the parsed, transformed package object. This feature can be used to add default values to package.json files or alter the package.json of third party modules without modifying them directly.
+* `packageTransform` (default: undefined) - A function that transforms package.json files before they are used. The function should be of the signature `function( pkgJson, path )` and return the parsed, transformed package object. This feature can be used to add default values to package.json files or alter the package.json of third party modules without modifying them directly.
 * `browserifyInstance` (default: undefined) - Use your own instance of browserify / watchify.
 * `browserifyBundleOptions` (default: {}) - Passed through directly to browserify.bundle().
 * `watch` : Watch mode - automatically rebuild bundles as appropriate for changes.
