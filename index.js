@@ -293,7 +293,6 @@ Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFi
 		if( appTranforms ) {
 			var pkgIsInAppTranformsDir = _.find( appTranformDirs, function( thisAppDirPath ) {
 				var relPath = path.relative( thisAppDirPath, dirPath );
-				console.log( relPath );
 				var needToBackup = relPath.charAt( 0 ) === '.' && relPath.charAt( 1 ) === '.';
 				var appTransformsApplyToThisDir = ! needToBackup && relPath.indexOf( 'node_modules' ) === -1;
 				return appTransformsApplyToThisDir;
