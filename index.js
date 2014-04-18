@@ -217,7 +217,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 			}, function( packageOptions, nextWaterfall ) {
 				var thisPackage;
 
-				var thisIsTheTopLevelParcel = packageJson.__isMain;
+				var thisIsTheTopLevelParcel = packageJson.__isMain && packageJson.__path === path.dirname( _this.mainPath );
 				var thisPackageIsAParcel = thisIsTheTopLevelParcel; // || parcelFinder.isParcel( packageJson, packageJson.__path,  );
 
 				if( ! existingPacakages[ thisPackageId ] ) {
