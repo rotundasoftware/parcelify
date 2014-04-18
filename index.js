@@ -10,7 +10,6 @@ var async = require( 'async' );
 var glob = require( 'glob' );
 var Package = require( './lib/package' );
 var Parcel = require( './lib/parcel' );
-var parcelFinder = require( 'parcel-finder' );
 var inherits = require( 'inherits' );
 var log = require( 'npmlog' );
 
@@ -219,7 +218,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 				var thisPackage;
 
 				var thisIsTheTopLevelParcel = packageJson.__isMain;
-				var thisPackageIsAParcel = thisIsTheTopLevelParcel || parcelFinder.isParcel( packageJson, packageJson.__path );
+				var thisPackageIsAParcel = thisIsTheTopLevelParcel; // || parcelFinder.isParcel( packageJson, packageJson.__path,  );
 
 				if( ! existingPacakages[ thisPackageId ] ) {
 					if( thisPackageIsAParcel ) {
@@ -233,7 +232,29 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 
 					thisPackage.createAllAssets( assetTypes );
 				}
-				else
+				else if( thisPackageIsAParcel && ! existingPacakages[ thisPackageId ] instanceof Parcel ) {
+					// k tricky here.. if this package is a parcel, but it exists in the manifest as a plain
+					// old package, then we gotta recreate this package as a parcel. also we have to update
+					// any parcels that are dependENTS of this package/parcel in order to use the new
+					// assets that we are about to create. man, scary, hope nothing gets fucked in the process.
+					// we could also pre-preemptively list out which packages are parcels by adding an option
+					// to parcelify itself, but that seems a little weird.
+					var oldPackage = existingPacakages[ thisPackageId ];
+					var oldDependentParcels = oldPackage.dependentParcels;
+
+					oldPackage.destroy();
+
+					thisPackage = packagesThatWereCreated[ thisPackageId ] = new Parcel( packageOptions );
+					thisPackage.createAllAssets( assetTypes );
+
+					oldDependentParcels.forEach( function( thisDependentParcel ) {
+						thisPackage.addDependentParcel( thisDependentParcel );
+						thisDependentParcel.calcSortedDependencies();
+						thisDependentParcel.calcParcelAssets( assetTypes );
+					} );
+
+					log.warn( '', 'Recreated package at ' + thisPackage.path + ' as Parcel.' );
+				} else
 					thisPackage = existingPacakages[ thisPackageId ];
 
 				if( thisIsTheTopLevelParcel ) mappedParcel = thisPackage;
