@@ -217,7 +217,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 			}, function( packageOptions, nextWaterfall ) {
 				var thisPackage;
 
-				var thisIsTheTopLevelParcel = packageJson.__isMain && packageJson.__path === path.dirname( _this.mainPath );
+				var thisIsTheTopLevelParcel = parcelMap.mainPackageId === thisPackageId;
 				var thisPackageIsAParcel = thisIsTheTopLevelParcel; // || parcelFinder.isParcel( packageJson, packageJson.__path,  );
 
 				if( ! existingPacakages[ thisPackageId ] ) {
@@ -238,7 +238,8 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 					// any parcels that are dependENTS of this package/parcel in order to use the new
 					// assets that we are about to create. man, scary, hope nothing gets fucked in the process.
 					// we could also pre-preemptively list out which packages are parcels by adding an option
-					// to parcelify itself, but that seems a little weird.
+					// to parcelify itself, but that seems a little weird as in the context of cartero that
+					// depend on the path of each package relative to the parcelDirs cartero option.
 					var oldPackage = existingPacakages[ thisPackageId ];
 					var oldDependentParcels = oldPackage.dependentParcels;
 
