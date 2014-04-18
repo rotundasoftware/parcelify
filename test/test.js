@@ -157,7 +157,8 @@ test( 'page6', function( t ) {
 			style : path.join( dstDir, 'bundle.css' )
 		},
 
-		defaultTransforms : [ require( 'sass-css-stream' ) ]
+		appTranforms : [ require( 'sass-css-stream' ) ],
+		appTranformDirs : [ './test/page6/' ]
 	};
 
 	mkdirp.sync( dstDir );

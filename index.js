@@ -33,7 +33,9 @@ function Parcelify( mainPath, options ) {
 			// template : 'bundle.tmpl'		// don't bundle templates by default.. against best-practices
 		},
 
-		defaultTransforms : [],
+		appTranforms : [],
+		appTranformDirs : [],
+
 		packageTransform : undefined,
 		
 		watch : false,
@@ -106,7 +108,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 	var mainParcelMap;
 	var packageFilter;
 
-	packageFilter = this._createBrowserifyPackageFilter( options.packageTransform, options.defaultTransforms );
+	packageFilter = this._createBrowserifyPackageFilter( options.packageTransform, options.appTranforms, options.appTranformDirs );
 	options.browserifyBundleOptions.packageFilter = packageFilter;
 
 	var packages = _.reduce( existingAssets, function( memo, thisPackage, thisPackageId ) {
@@ -276,20 +278,29 @@ Parcelify.prototype._setupParcelEventRelays = function( parcel ) {
 		} );
 	} );
 
-	parcel.on( 'bundleUpdated', function( path, assetType ) {
-		_this.emit( 'bundleWritten', path, assetType, true );
+	parcel.on( 'bundleUpdated', function( bundlePath, assetType ) {
+		_this.emit( 'bundleWritten', bundlePath, assetType, true );
 	} );
 };
 
 
-Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFilter, defaultTransforms ) {
+Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFilter, appTranforms, appTranformDirs ) {
 	var packageFilter = existingPackageFilter;
 
-	if( ! packageFilter ) packageFilter = function( pkg ){ return pkg; };
+	if( ! packageFilter ) packageFilter = function( pkg, dirPath ){ return pkg; };
 
-	function applyDefaultTransforms( pkg ) {
-		if( ( ! pkg.transforms || pkg.transforms.length === 0 ) && defaultTransforms )
-			pkg.transforms = defaultTransforms;
+	function applyAppTransforms( pkg, dirPath ) {
+		if( appTranforms ) {
+			var pkgIsInAppTranformsDir = _.find( appTranformDirs, function( thisAppDirPath ) {
+				var relPath = path.relative( thisAppDirPath, dirPath );
+				var needToBackup = relPath.charAt( 0 ) === '.' && relPath.charAt( 1 ) === '.';
+				var appTransformsApplyToThisDir = ! needToBackup && relPath.indexOf( 'node_modules' ) === -1;
+				return appTransformsApplyToThisDir;
+			} );
+
+			if( pkgIsInAppTranformsDir )
+				pkg.transforms = appTranforms.concat( pkg.tranforms || [] );
+		}
 
 		return pkg;
 	}
@@ -306,5 +317,11 @@ Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFi
 		return pkg;
 	}
 
-	return _.compose( curryTranformsToBrowserify, applyDefaultTransforms, packageFilter );
+	return function( pkg, dirPath ) {
+		if( existingPackageFilter ) pkg = existingPackageFilter( pkg, dirPath );
+		pkg = applyAppTransforms( pkg, dirPath );
+		pkg = curryTranformsToBrowserify( pkg, dirPath );
+
+		return pkg;
+	};
 };

@@ -5,7 +5,7 @@ Output css or other bundles based on the [browserify](http://browserify.org/) de
 * Use npm packages for interface components with styles and templates.
 * Efficiently transform scss / less to css, coffee to JavaScript, etc. using streams.
 * Rebuild bundles automatically with watch mode.
-* Leverage a robust API to build even cooler libraries like [cartero](https://github.com/rotundasoftware/cartero).
+* Leverage a robust API to create larger build tools like [cartero](https://github.com/rotundasoftware/cartero).
 
 Many thanks to [James Halliday](https://twitter.com/substack) for his help and guidance in bringing this project into reality.
 
@@ -65,7 +65,9 @@ $ npm install -g parcelify
 
 --maps, -m        Enable JavaScript source maps in js bundles (for dev mode).
 
---transform, -t   Name or path of a default transform. (See discussion of `defaultTransforms` option.)
+--transform, -t   Name or path of an application transform. (See discussion of application transforms.)
+
+--transformDir    Path of an application transform directory. (See discussion of application transforms.)
 
 --help, -h        Show this message
 ```
@@ -84,32 +86,19 @@ The safest and most portable way to apply transforms like sass -> css or coffee 
   "style" : "*.scss",
   "transforms" : [ "sass-css-stream" ],
   "dependencies" : {
-    "sass-css-stream": "0.0.1"
+    "sass-css-stream": "~0.0.1"
   }
 }
 ```
 
 All transform modules are called on all assets plus JavaScript files. It is up to the transform module to determine whether or not it should apply itself to a file (usually based on the file extension).
 
-### Application level (global) transforms
+### Application level transforms
 
-You can apply quasi-global, application level transforms using the `defaultTransforms` option.
+You can apply transforms to all packages within an entire branch of the directory tree (e.g. your entire app directory) using the `appTransforms` and `appTransformDirs` options or their corresponding command line arguments. Packages inside a `node_modules` folder located inside one of the supplied directories are not effected.
 
 ```
-$ parcelify main.js -c bundle.css -t "sass-css-stream"
-```
-
-Because such application level transforms can easily conflict with local transforms, the transforms in `defaultTransforms` are only applied to packages that to not have their own local transforms. If you need more control over which application level transforms are applied to what packages, you can use the `packageTransform` option to insert transforms into the package.json of specific packages.
-
-```javascript
-c = parcelify( mainPath, {
-    packageTransform : function( pkg ) {
-        if( ! shouldApplyAppTransforms( pkg ) ) return pkg;
-
-        pkg.transforms = ( pkg.transforms || [] )
-            .concat( [ 'sass-scc-stream' ] );
-    }
-} );
+$ parcelify main.js -c bundle.css -t "sass-css-stream" -transformDir "."
 ```
 
 ## API
@@ -126,8 +115,9 @@ bundles : {
   style : 'bundle.css'   // bundle `style` assets and output here
 }
 ```
-* `defaultTransforms` (default: undefined) - An array of [transform modules](https://github.com/substack/module-deps#transforms) names / paths or functions to be applied to packages in which no local transforms are specified. Can be used for quasi-global transforms (without the risk of conflicting with packages that use their own transforms).
-* `packageTransform` (default: undefined) - A function that transforms package.json files before they are used. The function should be of the signature `function( pkgJson )` and return the parsed, transformed package object. This feature can be used to add default values to package.json files or alter the package.json of third party modules without modifying them directly.
+* `appTransforms` (default: undefined) - An array of [transform modules](https://github.com/substack/module-deps#transforms) names / paths or functions to be applied to all packages in directories in the `appTransformDirs` array.
+* `appTransformDirs` (default: undefined) - `appTransforms` are applied to any packages that are within one of the directories in this array. (The recursive search is stopped on `node_module` directories.)
+* `packageTransform` (default: undefined) - A function that transforms package.json files before they are used. The function should be of the signature `function( pkgJson, path )` and return the parsed, transformed package object. This feature can be used to add default values to package.json files or alter the package.json of third party modules without modifying them directly.
 * `browserifyInstance` (default: undefined) - Use your own instance of browserify / watchify.
 * `browserifyBundleOptions` (default: {}) - Passed through directly to browserify.bundle().
 * `watch` : Watch mode - automatically rebuild bundles as appropriate for changes.
