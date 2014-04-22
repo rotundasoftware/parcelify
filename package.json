@@ -18,7 +18,7 @@
     "glob": "~3.2.9",
     "toposort": "~0.2.10",
     "watchify": "~0.7.0",
-    "globwatcher": "~1.2.2",
+    "globwatcher": "~1.2.3",
     "resolve": "~0.6.1",
     "stream-combiner": "0.0.4",
     "minimist": "0.0.8",
