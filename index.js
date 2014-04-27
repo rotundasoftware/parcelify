@@ -236,10 +236,10 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 					// k tricky here.. if this package is a parcel, but it exists in the manifest as a plain
 					// old package, then we gotta recreate this package as a parcel. also we have to update
 					// any parcels that are dependENTS of this package/parcel in order to use the new
-					// assets that we are about to create. man, scary, hope nothing gets fucked in the process.
+					// assets that we are about to create. man, scary, hope nothing gets broke in the process.
 					// we could also pre-preemptively list out which packages are parcels by adding an option
-					// to parcelify itself, but that seems a little weird as in the context of cartero that
-					// depend on the path of each package relative to the parcelDirs cartero option.
+					// to parcelify itself, but that seems a little weird. In the context of cartero that
+					// depends on the path of each package relative to the parcelDirs cartero option.
 					var oldPackage = existingPacakages[ thisPackageId ];
 					var oldDependentParcels = oldPackage.dependentParcels;
 
@@ -271,6 +271,9 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 		// now that we have all our packages instantiated, hook up dependencies
 		_.each( parcelMap.dependencies, function( dependencyIds, thisPackageId ) {
 			var thisPackage = allPackages[ thisPackageId ];
+
+			if( ! thisPackage ) return nextSeries( new Error( 'Unknown package id in dependency ' + thisPackageId ) );
+
 			var thisPackageDependencies = _.map( dependencyIds, function( thisDependencyId ) { return allPackages[ thisDependencyId ]; } );
 			thisPackage.setDependencies( thisPackageDependencies );
 		} );
