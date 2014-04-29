@@ -1,0 +1,7 @@
+{
+  "name" : "parcelify.test",
+  "version" : "0.0.0",
+  "dependencies" : {
+	"my-module" : "*"
+  }
+}
