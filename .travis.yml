@@ -1,8 +1,4 @@
 language: node_js
 node_js:
   - "0.10"
-before_install: 
-  - npm install async inherits npmlog shasum toposort glob minimist parcel-map stream-combiner watchify globwatcher mkdirp resolve through2
-script:
-  - bash test/cli/run-cli-tests.sh
-	
+
