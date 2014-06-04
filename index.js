@@ -32,8 +32,8 @@ function Parcelify( mainPath, options ) {
 			// template : 'bundle.tmpl'		// don't bundle templates by default.. against best-practices
 		},
 
-		appTranforms : [],
-		appTranformDirs : [],
+		appTransforms : [],
+		appTransformDirs : [],
 
 		packageTransform : undefined,
 		
@@ -107,7 +107,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 	var mainParcelMap;
 	var packageFilter;
 
-	packageFilter = this._createBrowserifyPackageFilter( options.packageTransform, options.appTranforms, options.appTranformDirs );
+	packageFilter = this._createBrowserifyPackageFilter( options.packageTransform, options.appTransforms, options.appTransformDirs );
 	options.browserifyBundleOptions.packageFilter = packageFilter;
 
 	var packages = _.reduce( existingAssets, function( memo, thisPackage, thisPackageId ) {
@@ -309,29 +309,29 @@ Parcelify.prototype._setupParcelEventRelays = function( parcel ) {
 };
 
 
-Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFilter, appTranforms, appTranformDirs ) {
+Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFilter, appTransforms, appTransformDirs ) {
 	var packageFilter = existingPackageFilter;
 
 	if( ! packageFilter ) packageFilter = function( pkg, dirPath ){ return pkg; };
 
 	function applyAppTransforms( pkg, dirPath ) {
-		if( appTranforms ) {
-			var pkgIsInAppTranformsDir = _.find( appTranformDirs, function( thisAppDirPath ) {
+		if( appTransforms ) {
+			var pkgIsInAppTransformsDir = _.find( appTransformDirs, function( thisAppDirPath ) {
 				var relPath = path.relative( thisAppDirPath, dirPath );
 				var needToBackup = relPath.charAt( 0 ) === '.' && relPath.charAt( 1 ) === '.';
 				var appTransformsApplyToThisDir = ! needToBackup && relPath.indexOf( 'node_modules' ) === -1;
 				return appTransformsApplyToThisDir;
 			} );
 
-			if( pkgIsInAppTranformsDir )
-				pkg.transforms = appTranforms.concat( pkg.tranforms || [] );
+			if( pkgIsInAppTransformsDir )
+				pkg.transforms = appTransforms.concat( pkg.transform || [] );
 		}
 
 		return pkg;
 	}
 
 	// make another transform that curries the browserify transforms to our generalized transform key
-	function curryTranformsToBrowserify( pkg ) {
+	function curryTransformsToBrowserify( pkg ) {
 		if( pkg.transforms && _.isArray( pkg.transforms ) ) {
 			if( ! pkg.browserify ) pkg.browserify = {};
 			if( ! pkg.browserify.transform ) pkg.browserify.transform = [];
@@ -345,7 +345,7 @@ Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFi
 	return function( pkg, dirPath ) {
 		if( existingPackageFilter ) pkg = existingPackageFilter( pkg, dirPath );
 		pkg = applyAppTransforms( pkg, dirPath );
-		pkg = curryTranformsToBrowserify( pkg, dirPath );
+		pkg = curryTransformsToBrowserify( pkg, dirPath );
 
 		return pkg;
 	};

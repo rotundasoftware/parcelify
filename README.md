@@ -72,7 +72,7 @@ $ npm install -g parcelify
 --help, -h        Show this message
 ```
 
-## Tranforms
+## Transforms
 
 ### Local (package specific) transforms
 
