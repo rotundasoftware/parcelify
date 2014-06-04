@@ -324,7 +324,7 @@ Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFi
 			} );
 
 			if( pkgIsInAppTransformsDir )
-				pkg.transforms = appTransforms.concat( pkg.transform || [] );
+				pkg.transforms = appTransforms.concat( pkg.transforms || [] );
 		}
 
 		return pkg;
