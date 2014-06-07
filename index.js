@@ -105,11 +105,11 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 	var assetTypes = _.without( Object.keys( options.bundles ), 'script' );
 	var mainPath = this.mainPath;
 	var mainParcelMap;
-	var packageFilter;
+	var packageTransform;
 
-	packageFilter = this._createBrowserifyPackageFilter( options.packageTransform, options.appTransforms, options.appTransformDirs );
-	options.browserifyBundleOptions.packageFilter = packageFilter;
-
+	packageTransform = this._createPackageTransform( options.packageTransform, options.appTransforms, options.appTransformDirs );
+	options.browserifyBundleOptions.packageFilter = packageTransform;
+	
 	var packages = _.reduce( existingAssets, function( memo, thisPackage, thisPackageId ) {
 		memo[ thisPackage.path ] = thisPackage.package;
 		return memo;
@@ -119,7 +119,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 		keys : assetTypes,
 		files : options.mappedAssets,
 		packages : packages,
-		packageFilter : packageFilter
+		packageFilter : packageTransform
 	} );
 
 	async.parallel( [ function( nextParallel ) {
@@ -187,7 +187,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 					if( options.watch ) {
 						// we only create glob watchers for the packages that parcel added to the manifest. Again, we want to avoid doubling up
 						// work in situations where we have multiple parcelify instances running that share common bundles
-						_.each( packagesThatWereCreated, function( thisPackage ) { thisPackage.createWatchers( assetTypes, options.packageTransform ); } );
+						_.each( packagesThatWereCreated, function( thisPackage ) { thisPackage.createWatchers( assetTypes, packageTransform ); } );
 						if( mainParcelIsNew ) mainParcel.attachWatchListeners( options.bundles );
 					}
 
@@ -309,7 +309,7 @@ Parcelify.prototype._setupParcelEventRelays = function( parcel ) {
 };
 
 
-Parcelify.prototype._createBrowserifyPackageFilter = function( existingPackageFilter, appTransforms, appTransformDirs ) {
+Parcelify.prototype._createPackageTransform = function( existingPackageFilter, appTransforms, appTransformDirs ) {
 	var packageFilter = existingPackageFilter;
 
 	if( ! packageFilter ) packageFilter = function( pkg, dirPath ){ return pkg; };
