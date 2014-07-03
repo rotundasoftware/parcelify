@@ -1,6 +1,6 @@
 {
   "name": "parcelify",
-  "version": "0.11.3",
+  "version": "0.11.4",
   "description": "Create css bundles from npm packages using the browserify dependency graph.",
   "main": "index.js",
   "bin": {
