@@ -13,4 +13,6 @@ OPTIONS:
 
   --transform, -t   Name or path of a default transform. (See discussion of `defaultTransforms` option.)
 
+  --loglevel        Set the verbosity of npmlog, eg. "silent", "error", "warn", "info", "verbose"
+
   --help, -h        Show this message
