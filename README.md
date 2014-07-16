@@ -69,6 +69,8 @@ $ npm install -g parcelify
 
 --transformDir    Path of an application transform directory. (See discussion of application transforms.)
 
+--loglevel        Set the verbosity of npmlog, eg. "silent", "error", "warn", "info", "verbose"
+
 --help, -h        Show this message
 ```
 
@@ -120,6 +122,7 @@ bundles : {
 * `packageTransform` (default: undefined) - A function that transforms package.json files before they are used. The function should be of the signature `function( pkgJson, path )` and return the parsed, transformed package object. This feature can be used to add default values to package.json files or alter the package.json of third party modules without modifying them directly.
 * `browserifyInstance` (default: undefined) - Use your own instance of browserify / watchify.
 * `browserifyBundleOptions` (default: {}) - Passed through directly to browserify.bundle().
+* `logLevel` : set the [npmlog](https://www.npmjs.org/package/npmlog) logging level.
 * `watch` : Watch mode - automatically rebuild bundles as appropriate for changes.
 
 A parcelify object is returned, which is an event emitter.

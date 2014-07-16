@@ -31,6 +31,7 @@ var cssBundle = resolvePath( argv.cssBundle );
 var tmplBundle = resolvePath( argv.tmplBundle );
 var mainPath = resolvePath( argv._[0] );
 var defaultTransforms = argv.transform;
+var logLevel = argv.loglevel;
 var watch = argv.watch;
 var maps = argv.maps;
 
@@ -49,7 +50,8 @@ var p = parcelify( mainPath, {
 	browserifyBundleOptions : {
 		debug : maps
 	},
-	watch : watch
+	watch : watch,
+	logLevel : logLevel
 } );
 
 p.on( 'error', function( err ) {
