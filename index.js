@@ -50,10 +50,7 @@ function Parcelify( mainPath, options ) {
 	this.mainPath = mainPath;
 	this.watching = false;
 
-	if ( options.logLevel ) {
-		log.level = options.logLevel;
-		Package.setLogLevel( options.logLevel );
-	}
+	if ( options.logLevel ) log.level = options.logLevel;
 
 	var browserifyInstance;
 
