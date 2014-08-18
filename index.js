@@ -135,6 +135,9 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 		} );
 	}, function( nextParallel ) {
 		browserifyInstance.bundle( options.browserifyBundleOptions, function( err, res ) {
+			// would be complicated to keep going on browserify errors.. would need to get the half-done map from
+			// parcel map somehow.. probably would need to listen for browser errors in parcel map and exit early.
+			// we starting down this road but was going to take a while so shelved it for later.
 			if( err ) return nextParallel( new Error( 'Error while browserifying "' + mainPath + '":' + err ) );
 
 			jsBundleContents = res;
@@ -155,6 +158,8 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 					// fire package events for any new packages
 					_.each( packagesThatWereCreated, function( thisPackage ) {
 						var isMainParcel = thisPackage === mainParcel;
+
+						log.verbose( 'Created new package ' + thisPackage.path + ' with id ' + thisPackage.id );
 
 						existingPackages[ thisPackage.id ] = thisPackage;
 						if( isMainParcel ) _this._setupParcelEventRelays( thisPackage );
