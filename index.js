@@ -60,7 +60,7 @@ function Parcelify( mainPath, options ) {
 		else {
 			var browserifyOptions = _.extend( {}, options.browserifyOptions, { entries : mainPath } );
 			browserifyInstance = options.watch ? watchify( browserifyOptions ) : browserify( browserifyOptions );
-			_this.emit( 'browserifyInstanceCreated', browserifyInstance );
+			_this.emit( 'browserifyInstanceCreated', browserifyInstance, _this.mainPath );
 		}
 
 		var existingPackages = options.existingPackages || {};

@@ -139,6 +139,9 @@ Called when a new package is created. `package` is a package object as defined i
 ### p.on( 'assetUpdated', function( eventType, asset ){} );
 Called when a style asset is updated in watch mode. `eventType` is `'added'`, `'changed'`, or `'deleted'`, and `asset` is an asset object as defined in `lib/asset.js`.
 
+### p.on( 'browserifyInstanceCreated', function( browserifyInstance, entryPoint ){} );
+Called when a browserify / watchify instance is created, ```entryPoint``` is the absolute path for the js file that serves as entry point for that parcel.
+
 ## Client side templates and other assets
 
 Parcelify actually supports concatenation / enumeration of arbitrary asset types. Just add a bundle for an asset type in the `bundles` option and use the same key to enumerate assets of that type in package.json.
