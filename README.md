@@ -103,6 +103,15 @@ You can apply transforms to all packages within an entire branch of the director
 $ parcelify main.js -c bundle.css -t "sass-css-stream" -transformDir "."
 ```
 
+### Catalog of transforms
+
+In addition to all [browserify transforms](https://github.com/substack/node-browserify/wiki/list-of-transforms), the following transforms can be used with parcelify. Please let us know if you develop a transform and we'll include it in this list.
+
+* [sass-css-stream](https://github.com/rotundasoftware/sass-css-stream) - convert sass to css.
+* [sass-bourbon-transform](https://github.com/rotundasoftware/sass-bourbon-transform) - convert sass to css with [bourbon](http://bourbon.io/).
+* [css-img-datauri-stream](https://github.com/jbkirby/css-img-datauri-stream) - inline images in your css with data urls.
+* [parcelify-import-resolver](https://github.com/johanneslumpe/parcelify-import-resolver) - resolve paths using the node resolve algorithm.
+
 ## API
 
 #### p = parcelify( mainPath, [options] )
