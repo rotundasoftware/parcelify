@@ -130,6 +130,7 @@ bundles : {
 * `appTransformDirs` (default: undefined) - `appTransforms` are applied to any packages that are within one of the directories in this array. (The recursive search is stopped on `node_module` directories.)
 * `packageTransform` (default: undefined) - A function that transforms package.json files before they are used. The function should be of the signature `function( pkgJson, path )` and return the parsed, transformed package object. This feature can be used to add default values to package.json files or alter the package.json of third party modules without modifying them directly.
 * `browserifyInstance` (default: undefined) - Use your own instance of browserify / watchify.
+* `browserifyOptions` (default: {}) - Passed to the [browserify constructor](https://github.com/substack/node-browserify#var-b--browserifyfiles-or-opts).
 * `browserifyBundleOptions` (default: {}) - Passed through directly to browserify.bundle(). For example, use `{ debug : true }` to turn on source maps (equivalent to -m command line option).
 * `logLevel` - set the [npmlog](https://www.npmjs.org/package/npmlog) logging level.
 * `watch` (default: false) - automatically rebuild bundles as appropriate for changes.
