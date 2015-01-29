@@ -28,7 +28,7 @@ In my-module's `package.json`, the module's style assets just need to be enumera
 {
   "name" : "my-module",
   "version": "1.5.0",
-  "style" : "*.css"
+  "style" : "*.css"      // glob notation. can optionally be an array
 }
 ```
 
