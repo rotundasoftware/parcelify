@@ -108,6 +108,7 @@ $ parcelify main.js -c bundle.css -t "sass-css-stream" -transformDir "."
 In addition to all [browserify transforms](https://github.com/substack/node-browserify/wiki/list-of-transforms), the following transforms can be used with parcelify. Please let us know if you develop a transform and we'll include it in this list.
 
 * [sass-css-stream](https://github.com/rotundasoftware/sass-css-stream) - convert sass to css.
+* [less-css-stream](https://github.com/jsdf/less-css-stream) - convert less to css.
 * [sass-bourbon-transform](https://github.com/rotundasoftware/sass-bourbon-transform) - convert sass to css with [bourbon](http://bourbon.io/).
 * [css-img-datauri-stream](https://github.com/jbkirby/css-img-datauri-stream) - inline images in your css with data urls.
 * [parcelify-import-resolver](https://github.com/johanneslumpe/parcelify-import-resolver) - resolve paths using the node resolve algorithm.
