@@ -52,13 +52,18 @@ function Parcelify( mainPath, options ) {
 
 	if ( options.logLevel ) log.level = options.logLevel;
 
+	var packageTransform;
 	var browserifyInstance;
 
 	// before we jump the gun, return from this function so we can listen to events from the calling function
 	process.nextTick( function() {
 		if( options.browserifyInstance ) browserifyInstance = options.browserifyInstance;
 		else {
-			var browserifyOptions = _.extend( {}, options.browserifyOptions, { entries : mainPath } );
+			var browserifyOptions = _.extend( {}, options.browserifyOptions, options.browserifyBundleOptions, { entries : mainPath } );
+			
+			packageTransform = _this._createPackageTransform( options.packageTransform, options.appTransforms, options.appTransformDirs );
+			browserifyOptions.packageFilter = packageTransform;
+
 			browserifyInstance = options.watch ? watchify( browserifyOptions ) : browserify( browserifyOptions );
 			_this.emit( 'browserifyInstanceCreated', browserifyInstance );
 		}
@@ -78,6 +83,7 @@ function Parcelify( mainPath, options ) {
 					var processParcelOptions = _.clone( options );
 					processParcelOptions.existingPackages = existingPackages;
 					processParcelOptions.mappedAssets = mappedAssets;
+					processParcelOptions.packageTransform = packageTransform;
 
 					_this.processParcel( browserifyInstance, processParcelOptions, function( err, parcel ) {
 						if( err ) _this.emit( 'error', err );
@@ -89,6 +95,7 @@ function Parcelify( mainPath, options ) {
 		var processParcelOptions = _.clone( options );
 		processParcelOptions.existingPackages = existingPackages;
 		processParcelOptions.mappedAssets = mappedAssets;
+		processParcelOptions.packageTransform = packageTransform;
 
 		_this.processParcel( browserifyInstance, processParcelOptions, function( err, parcel ) {
 			if( err ) _this.emit( 'error', err );
@@ -107,10 +114,6 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 	var assetTypes = _.without( Object.keys( options.bundles ), 'script' );
 	var mainPath = this.mainPath;
 	var mainParcelMap;
-	var packageTransform;
-
-	packageTransform = this._createPackageTransform( options.packageTransform, options.appTransforms, options.appTransformDirs );
-	options.browserifyBundleOptions.packageFilter = packageTransform;
 	
 	var packages = _.reduce( existingAssets, function( memo, thisPackage, thisPackageId ) {
 		memo[ thisPackage.path ] = thisPackage.package;
@@ -121,7 +124,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 		keys : assetTypes,
 		files : options.mappedAssets,
 		packages : packages,
-		packageFilter : packageTransform
+		packageFilter : options.packageTransform
 	} );
 
 	async.parallel( [ function( nextParallel ) {
@@ -134,7 +137,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 			nextParallel();
 		} );
 	}, function( nextParallel ) {
-		browserifyInstance.bundle( options.browserifyBundleOptions, function( err, res ) {
+		browserifyInstance.bundle( function( err, res ) {
 			// would be complicated to keep going on browserify errors.. would need to get the half-done map from
 			// parcel map somehow.. probably would need to listen for browser errors in parcel map and exit early.
 			// we starting down this road but was going to take a while so shelved it for later.
