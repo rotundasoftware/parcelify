@@ -1,6 +1,4 @@
 var path = require('path');
-var browserify = require( 'browserify' );
-var watchify = require( 'watchify' );
 var parcelMap = require( 'parcel-map' );
 var shasum = require( 'shasum' );
 var through2 = require( 'through2' );
@@ -20,26 +18,23 @@ module.exports = Parcelify;
 
 inherits( Parcelify, EventEmitter );
 
-function Parcelify( mainPath, options ) {
+function Parcelify( browserifyInstance, options ) {
 	var _this = this;
 	
-	if( ! ( this instanceof Parcelify ) ) return new Parcelify( mainPath, options );
+	if( ! ( this instanceof Parcelify ) ) return new Parcelify( browserifyInstance, options );
 
 	options = _.defaults( {}, options, {
 		bundles : {
-			script : 'bundle.js',
 			style : 'bundle.css'
 			// template : 'bundle.tmpl'		// don't bundle templates by default.. against best-practices
 		},
 
 		appTransforms : [],
 		appTransformDirs : [],
-
-		packageTransform : undefined,
 		
 		watch : false,
 
-		browserifyInstance : undefined,
+		// browserifyInstance : undefined,
 		browserifyOptions : {},
 		browserifyBundleOptions : {},
 
@@ -47,27 +42,13 @@ function Parcelify( mainPath, options ) {
 		existingPackages : undefined
 	} );
 
-	this.mainPath = mainPath;
+	// this.mainPath = mainPath;
 	this.watching = false;
 
 	if ( options.logLevel ) log.level = options.logLevel;
 
-	var packageTransform;
-	var browserifyInstance;
-
 	// before we jump the gun, return from this function so we can listen to events from the calling function
 	process.nextTick( function() {
-		if( options.browserifyInstance ) browserifyInstance = options.browserifyInstance;
-		else {
-			var browserifyOptions = _.extend( {}, options.browserifyOptions, options.browserifyBundleOptions, { entries : mainPath } );
-			
-			packageTransform = _this._createPackageTransform( options.packageTransform, options.appTransforms, options.appTransformDirs );
-			browserifyOptions.packageFilter = packageTransform;
-
-			browserifyInstance = options.watch ? watchify( browserifyOptions ) : browserify( browserifyOptions );
-			_this.emit( 'browserifyInstanceCreated', browserifyInstance );
-		}
-
 		var existingPackages = options.existingPackages || {};
 		var mappedAssets = {};
 
@@ -83,7 +64,6 @@ function Parcelify( mainPath, options ) {
 					var processParcelOptions = _.clone( options );
 					processParcelOptions.existingPackages = existingPackages;
 					processParcelOptions.mappedAssets = mappedAssets;
-					processParcelOptions.packageTransform = packageTransform;
 
 					_this.processParcel( browserifyInstance, processParcelOptions, function( err, parcel ) {
 						if( err ) _this.emit( 'error', err );
@@ -95,7 +75,6 @@ function Parcelify( mainPath, options ) {
 		var processParcelOptions = _.clone( options );
 		processParcelOptions.existingPackages = existingPackages;
 		processParcelOptions.mappedAssets = mappedAssets;
-		processParcelOptions.packageTransform = packageTransform;
 
 		_this.processParcel( browserifyInstance, processParcelOptions, function( err, parcel ) {
 			if( err ) _this.emit( 'error', err );
@@ -107,11 +86,10 @@ function Parcelify( mainPath, options ) {
 
 Parcelify.prototype.processParcel = function( browserifyInstance, options, callback ) {
 	var _this = this;
-	var jsBundleContents;
 
 	var existingPackages = options.existingPackages || {};
 	var existingAssets = options.existingPackages || {};
-	var assetTypes = _.without( Object.keys( options.bundles ), 'script' );
+	var assetTypes = Object.keys( options.bundles );
 	var mainPath = this.mainPath;
 	var mainParcelMap;
 	
@@ -123,38 +101,18 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 	var parcelMapEmitter = parcelMap( browserifyInstance, {
 		keys : assetTypes,
 		files : options.mappedAssets,
-		packages : packages,
-		packageFilter : options.packageTransform
+		packages : packages
 	} );
 
-	async.parallel( [ function( nextParallel ) {
-		parcelMapEmitter.on( 'error', function( err ) {
-			return callback( err );
-		} );
+	parcelMapEmitter.on( 'error', function( err ) {
+		return callback( err );
+	} );
 
-		parcelMapEmitter.on( 'done', function( res ) {
-			mainParcelMap = res;
-			nextParallel();
-		} );
-	}, function( nextParallel ) {
-		browserifyInstance.bundle( function( err, res ) {
-			// would be complicated to keep going on browserify errors.. would need to get the half-done map from
-			// parcel map somehow.. probably would need to listen for browser errors in parcel map and exit early.
-			// we starting down this road but was going to take a while so shelved it for later.
-			if( err ) return nextParallel( new Error( 'Error while browserifying "' + mainPath + '":' + err ) );
-
-			jsBundleContents = res;
-			nextParallel();
-		} );
-	} ], function( err ) {
-		if( err ) return callback( err );
-
-		_this.instantiateParcelAndPackagesFromMap( mainParcelMap, existingPackages, assetTypes, function( err, mainParcel, packagesThatWereCreated ) {
+	parcelMapEmitter.on( 'done', function( mainParcelMap ) {
+		_this.instantiateParcelAndPackagesFromMap( mainParcelMap, existingPackages, assetTypes, options.appTransforms, options.appTransformDirs, function( err, mainParcel, packagesThatWereCreated ) {
 			if( err ) return callback( err );
 
 			_this.mainParcel = mainParcel;
-
-			mainParcel.setJsBundleContents( jsBundleContents );
 
 			process.nextTick( function() {
 				async.series( [ function( nextSeries ) {
@@ -197,7 +155,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 					if( options.watch ) {
 						// we only create glob watchers for the packages that parcel added to the manifest. Again, we want to avoid doubling up
 						// work in situations where we have multiple parcelify instances running that share common bundles
-						_.each( packagesThatWereCreated, function( thisPackage ) { thisPackage.createWatchers( assetTypes, packageTransform ); } );
+						_.each( packagesThatWereCreated, function( thisPackage ) { thisPackage.createWatchers( assetTypes, browserifyInstance._options.packageFilter, options.appTransforms, options.appTransformDirs ); } );
 						if( mainParcelIsNew ) mainParcel.attachWatchListeners( options.bundles );
 					}
 
@@ -212,7 +170,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 	} );
 };
 
-Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, existingPacakages, assetTypes, callback ) {
+Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, existingPacakages, assetTypes, appTransforms, appTransformDirs, callback ) {
 	var _this = this;
 	var mappedParcel = null;
 	var packagesThatWereCreated = {};
@@ -223,7 +181,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 			var packageOptions = {};
 
 			async.waterfall( [ function( nextWaterfall ) {
-				Package.getOptionsFromPackageJson( thisPackageId, packageJson.__path, packageJson, assetTypes, nextWaterfall );
+				Package.getOptionsFromPackageJson( thisPackageId, packageJson.__path, packageJson, assetTypes, appTransforms, appTransformDirs, nextWaterfall );
 			}, function( packageOptions, nextWaterfall ) {
 				var thisPackage;
 
@@ -316,47 +274,4 @@ Parcelify.prototype._setupParcelEventRelays = function( parcel ) {
 	parcel.on( 'bundleUpdated', function( bundlePath, assetType ) {
 		_this.emit( 'bundleWritten', bundlePath, assetType, true );
 	} );
-};
-
-
-Parcelify.prototype._createPackageTransform = function( existingPackageFilter, appTransforms, appTransformDirs ) {
-	var packageFilter = existingPackageFilter;
-
-	if( ! packageFilter ) packageFilter = function( pkg, dirPath ){ return pkg; };
-
-	function applyAppTransforms( pkg, dirPath ) {
-		if( appTransforms ) {
-			var pkgIsInAppTransformsDir = _.find( appTransformDirs, function( thisAppDirPath ) {
-				var relPath = path.relative( thisAppDirPath, dirPath );
-				var needToBackup = relPath.charAt( 0 ) === '.' && relPath.charAt( 1 ) === '.';
-				var appTransformsApplyToThisDir = ! needToBackup && relPath.indexOf( 'node_modules' ) === -1;
-				return appTransformsApplyToThisDir;
-			} );
-
-			if( pkgIsInAppTransformsDir )
-				pkg.transforms = appTransforms.concat( pkg.transforms || [] );
-		}
-
-		return pkg;
-	}
-
-	// make another transform that curries the browserify transforms to our generalized transform key
-	function curryTransformsToBrowserify( pkg ) {
-		if( pkg.transforms && _.isArray( pkg.transforms ) ) {
-			if( ! pkg.browserify ) pkg.browserify = {};
-			if( ! pkg.browserify.transform ) pkg.browserify.transform = [];
-
-			pkg.browserify.transform = pkg.transforms.concat( pkg.browserify.transform );
-		}
-
-		return pkg;
-	}
-
-	return function( pkg, dirPath ) {
-		if( existingPackageFilter ) pkg = existingPackageFilter( pkg, dirPath );
-		pkg = applyAppTransforms( pkg, dirPath );
-		pkg = curryTransformsToBrowserify( pkg, dirPath );
-
-		return pkg;
-	};
 };
