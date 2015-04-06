@@ -9,7 +9,7 @@ Output css or other bundles based on the [browserify](http://browserify.org/) de
 
 Many thanks to [James Halliday](https://twitter.com/substack) for his help and guidance in bringing this project into reality.
 
-[![build status](https://secure.travis-ci.org/rotundasoftware/parcelify.png)](http://travis-ci.org/rotundasoftware/parcelify)
+[![build status](https://secure.travis-ci.org/rotundasoftware/parcelify.png)](https://api.travis-ci.org/rotundasoftware/parcelify.svg?branch=master)
 
 ## How dat work?
 
