@@ -40,13 +40,13 @@ myModule = require( 'my-module' );
 console.log( 'hello world' );
 ```
 
-Now run parcelify directly from the command line
+Now run parcelify directly from the command line:
 
 ```
 $ parcelify main.js -o bundle.css
 ```
 
-or as part of a [browserify command](browserify command)
+or by using the `-p` (plugin) flag in a [browserify command](browserify command):
 
 ```
 browserify -p [ parcelify -o bundle.css ] main.js -o bundle.js
