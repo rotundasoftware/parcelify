@@ -46,7 +46,7 @@ Now run from the command line (or as part of a [browserify command](browserify c
 $ parcelify main.js -o bundle.css
 ```
 
-`bundle.css` will now be a concatenation of all the css files in the modules on which `main.js` depends - in this case `myModule.css` - in the order of the js dependency graph.
+Parcelify will concatenate all the css files in the modules on which `main.js` depends -- in this case just `myModule.css` -- in the order of the js dependency graph, and write the output to `bundle.css`.
 
 ## Installation
 
