@@ -35,7 +35,7 @@ function Parcelify( browserifyInstance, options ) {
 		existingPackages : undefined
 	} );
 
-	options.bundles.style = options.bundles.style || options.o || 'bundle.css'
+	if( _.isUndefined( options.bundles.style ) ) options.bundles.style = options.o || 'bundle.css'
 
 	// this.mainPath = mainPath;
 	this.watching = false;
@@ -94,7 +94,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 	}, {} );
 
 	var dependencies = _.reduce( existingPackages, function( memo, thisPackage, thisPackageId ) {
-		memo[ thisPackage.id ] = _.map( thisPackage.dependencies, function( thisDependency ) { return thisDependency.id; } );
+		memo[ thisPackage.path ] = _.map( thisPackage.dependencies, function( thisDependency ) { return thisDependency.path; } );
 		return memo;
 	}, {} );
 
@@ -153,7 +153,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 					}, nextSeries );
 				}, function( nextSeries ) {
 					var mainParcelIsNew = _.contains( packagesThatWereCreated, mainParcel );
-					
+
 					if( options.watch ) {
 						// we only create glob watchers for the packages that parcel added to the manifest. Again, we want to avoid doubling up
 						// work in situations where we have multiple parcelify instances running that share common bundles
