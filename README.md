@@ -43,10 +43,10 @@ console.log( 'hello world' );
 Now run from the command line (or as part of a [browserify command](browserify command))
 
 ```
-$ parcelify main.js -c bundle.css
+$ parcelify main.js -o bundle.css
 ```
 
-`bundle.css` will now be a concatenation of all the css files in the modules on which `main.js` depends, in this case `myModule.css`, in the order of the js dependency graph.
+`bundle.css` will now be a concatenation of all the css files in the modules on which `main.js` depends - in this case `myModule.css` - in the order of the js dependency graph.
 
 ## Installation
 
