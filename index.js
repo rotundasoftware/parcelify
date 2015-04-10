@@ -24,23 +24,18 @@ function Parcelify( browserifyInstance, options ) {
 	if( ! ( this instanceof Parcelify ) ) return new Parcelify( browserifyInstance, options );
 
 	options = _.defaults( {}, options, {
-		bundles : {
-			style : 'bundle.css'
-			// template : 'bundle.tmpl'		// don't bundle templates by default.. against best-practices
-		},
+		bundles : {},
 
 		appTransforms : [],
 		appTransformDirs : [],
 		
 		watch : false,
 
-		// browserifyInstance : undefined,
-		browserifyOptions : {},
-		browserifyBundleOptions : {},
-
 		// used internally or in order to share packages between multiple parcelify instances
 		existingPackages : undefined
 	} );
+
+	options.bundles.style = options.bundles.style || options.o || 'bundle.css'
 
 	// this.mainPath = mainPath;
 	this.watching = false;
@@ -88,20 +83,26 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 	var _this = this;
 
 	var existingPackages = options.existingPackages || {};
-	var existingAssets = options.existingPackages || {};
+	//var existingAssets = options.existingPackages || {};
 	var assetTypes = Object.keys( options.bundles );
 	var mainPath = this.mainPath;
 	var mainParcelMap;
 	
-	var packages = _.reduce( existingAssets, function( memo, thisPackage, thisPackageId ) {
+	var packages = _.reduce( existingPackages, function( memo, thisPackage, thisPackageId ) {
 		memo[ thisPackage.path ] = thisPackage.package;
 		return memo;
-	}, [] );
+	}, {} );
+
+	var dependencies = _.reduce( existingPackages, function( memo, thisPackage, thisPackageId ) {
+		memo[ thisPackage.id ] = _.map( thisPackage.dependencies, function( thisDependency ) { return thisDependency.id; } );
+		return memo;
+	}, {} );
 
 	var parcelMapEmitter = parcelMap( browserifyInstance, {
 		keys : assetTypes,
 		files : options.mappedAssets,
-		packages : packages
+		packages : packages,
+		dependencies : dependencies
 	} );
 
 	parcelMapEmitter.on( 'error', function( err ) {
@@ -152,6 +153,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 					}, nextSeries );
 				}, function( nextSeries ) {
 					var mainParcelIsNew = _.contains( packagesThatWereCreated, mainParcel );
+					
 					if( options.watch ) {
 						// we only create glob watchers for the packages that parcel added to the manifest. Again, we want to avoid doubling up
 						// work in situations where we have multiple parcelify instances running that share common bundles
