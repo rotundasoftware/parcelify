@@ -4,7 +4,7 @@ A [browserify](http://browserify.org/) plugin so you can use npm to handle front
 
 * Just add a `style` key to your `package.json` to specify the package's css file(s).
 * Efficiently transform scss / less to css, etc. using streams.
-* Rebuild bundles automatically in watch mode.
+* Rebuild css bundles automatically and efficiently in watch mode.
 * Leverage a robust API to create larger build tools like [cartero](https://github.com/rotundasoftware/cartero).
 
 Many thanks to [James Halliday](https://twitter.com/substack) for his help and guidance in bringing this project into reality.
