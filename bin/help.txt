@@ -3,16 +3,18 @@ EXAMPLE:
   $ parcelify main.js -j bundle.js -c bundle.css
 
 OPTIONS:
-  --jsBundle, -j    Path of the JavaScript bundle. If unspecified, no javscript bundle is output.
+	--cssBundle, -o   Path of a destination css bundle.
 
-  --cssBundle, -c   Path of the style bundle. If unspecified, no css bundle is output.
+	--jsBundle, -j    Path of the JavaScript bundle (i.e. browserify's output).
 
-  --watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.
+	--watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.
 
-  --maps, -m        Enable JavaScript source maps in js bundles (for dev mode).
+	--maps, -m        Enable JavaScript source maps in js bundles (for dev mode).
 
-  --transform, -t   Name or path of a default transform. (See discussion of `defaultTransforms` option.)
+	--transform, -t   Name or path of an application transform.
 
-  --loglevel        Set the verbosity of npmlog, eg. "silent", "error", "warn", "info", "verbose"
+	--transformDir    Path of an application transform directory.
 
-  --help, -h        Show this message
+	--loglevel        Set the verbosity of npmlog, eg. "silent", "error", "warn", "info", "verbose"
+
+	--help, -h        Show this message

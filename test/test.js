@@ -1,4 +1,5 @@
 var test = require('tape');
+var browserify = require( 'browserify' );
 var parcelify = require('../');
 var os = require('os');
 var path = require('path');
@@ -15,23 +16,26 @@ test( 'page1', function( t ) {
 
 	var options = {
 		bundles : {
-			script : path.join( dstDir, 'bundle.js' ),
-			style : path.join( dstDir, 'bundle.css' ),
+			// script : path.join( dstDir, 'bundle.js' ),
+			style : path.join( dstDir, 'bundle.css' )
 		}
 	};
 
 	mkdirp.sync( dstDir );
 
-	p = parcelify( mainPath, options );
+    var b = browserify( mainPath );
+	var p = parcelify( b, options );
+
+	b.bundle();
+
 	p.on( 'done', function() {
 		t.deepEqual(
 			fs.readdirSync( dstDir ).sort(),
-			[ 'bundle.css', 'bundle.js' ]
+			[ 'bundle.css' ]
 		);
 
 		t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h1 {\n\tfont-size: 18px;\n}body {\n	color: red;\n}\n' );
 	} );
-
 } );
 
 test( 'page2', function( t ) {
@@ -42,18 +46,21 @@ test( 'page2', function( t ) {
 	var dstDir = path.resolve( tmpdir, 'parcelify-test-' + Math.random() );
 	var options = {
 		bundles : {
-			script : path.join( dstDir, 'bundle.js' ),
 			style : path.join( dstDir, 'bundle.css' )
 		}
 	};
 
 	mkdirp.sync( dstDir );
 
-	p = parcelify( mainPath, options );
+    var b = browserify( mainPath );
+	var p = parcelify( b, options );
+
+	b.bundle();
+
 	p.on( 'done', function() {
 		t.deepEqual(
 			fs.readdirSync( dstDir ).sort(),
-			[ 'bundle.css', 'bundle.js' ]
+			[ 'bundle.css' ]
 		);
 
 		t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h1 {\n\tfont-size: 18px;\n}h2 {\n\tfont-weight: bold;\n}' );
@@ -68,18 +75,21 @@ test( 'page3', function( t ) {
 	var dstDir = path.resolve( tmpdir, 'parcelify-test-' + Math.random() );
 	var options = {
 		bundles : {
-			script : path.join( dstDir, 'bundle.js' ),
 			style : path.join( dstDir, 'bundle.css' )
 		}
 	};
 
 	mkdirp.sync( dstDir );
 
-	p = parcelify( mainPath, options );
+    var b = browserify( mainPath );
+	var p = parcelify( b, options );
+
+	b.bundle();
+
 	p.on( 'done', function() {
 		t.deepEqual(
 			fs.readdirSync( dstDir ).sort(),
-			[ 'bundle.css', 'bundle.js' ]
+			[ 'bundle.css' ]
 		);
 
 		// makes sure when multiple files are listed in a package.json style property, they are concatenated in the right order
@@ -104,11 +114,15 @@ test( 'page4', function( t ) {
 
 	mkdirp.sync( dstDir );
 
-	p = parcelify( mainPath, options );
+	var b = browserify( mainPath );
+	var p = parcelify( b, options );
+
+	b.bundle();
+
 	p.on( 'done', function() {
 		t.deepEqual(
 			fs.readdirSync( dstDir ).sort(),
-			[ 'bundle.css', 'bundle.js', 'bundle.tmpl' ]
+			[ 'bundle.css', 'bundle.tmpl' ]
 		);
 
 		t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'h1 {\n\tfont-size: 18px;\n}body h3 {\n  color: red; }\n' );
@@ -116,7 +130,7 @@ test( 'page4', function( t ) {
 	} );
 } );
 
-// test a parcel with no package.json
+// test a parcel with no package.json and no options
 test( 'page5', function( t ) {
 	t.plan( 1 );
 	
@@ -124,19 +138,17 @@ test( 'page5', function( t ) {
 	
 	var dstDir = path.resolve( tmpdir, 'parcelify-test-' + Math.random() );
 
-	var options = {
-		bundles : {
-			script : path.join( dstDir, 'bundle.js' )
-		}
-	};
-
 	mkdirp.sync( dstDir );
 
-	p = parcelify( mainPath, options );
+	var b = browserify( mainPath );
+	var p = parcelify( b );
+
+	b.bundle();
+
 	p.on( 'done', function() {
 		t.deepEqual(
 			fs.readdirSync( dstDir ).sort(),
-			[ 'bundle.js' ]
+			[]
 		);
 	} );
 
@@ -153,7 +165,6 @@ test( 'page6', function( t ) {
 
 	var options = {
 		bundles : {
-			script : path.join( dstDir, 'bundle.js' ),
 			style : path.join( dstDir, 'bundle.css' )
 		},
 
@@ -163,12 +174,15 @@ test( 'page6', function( t ) {
 
 	mkdirp.sync( dstDir );
 
-	p = parcelify( mainPath, options );
+	var b = browserify( mainPath );
+	var p = parcelify( b, options );
+
+	b.bundle();
 
 	p.on( 'done', function() {
 		t.deepEqual(
 			fs.readdirSync( dstDir ).sort(),
-			[ 'bundle.css', 'bundle.js' ]
+			[ 'bundle.css' ]
 		);
 
 		t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'div.beep div.boop {\n  color: green; }\n' );

@@ -1,5 +1,10 @@
 # Change Log
 
+### v1.0.0
+* changed to browserify plugin architecture
+* now can be used with any compatible version of browserify
+* the `transforms` package.json no longer supports js transforms
+
 ### v0.12.0
 * add log level option
 
