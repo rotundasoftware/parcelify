@@ -40,7 +40,7 @@ myModule = require( 'my-module' );
 console.log( 'hello world' );
 ```
 
-Now run parceify directly from the command line
+Now run parcelify directly from the command line
 
 ```
 $ parcelify main.js -o bundle.css
