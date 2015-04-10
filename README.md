@@ -147,7 +147,7 @@ Called when a style asset is updated in watch mode. `eventType` is `'added'`, `'
 
 ## Browserify plugin
 
-Since parcelify is a [browserify plugin](https://github.com/substack/node-browserify#plugins), you tack it on to a standard call to browserify using browserify's `-p` flag.
+Since parcelify is a [browserify plugin](https://github.com/substack/node-browserify#plugins), you can tack it on to a browserify command using browserify's `-p` flag.
 
 ```
 browserify -p [ parcelify -o output.css ] main.js -o output.js
