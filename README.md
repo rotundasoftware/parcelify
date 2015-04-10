@@ -119,7 +119,7 @@ In addition to all [browserify transforms](https://github.com/substack/node-brow
 
 `b` is a browserify instance. You must call `b.bundle()` before parcelify will do its thing. Options are:
 
-* `bundles` - A hash that maps asset types to bundle paths. You will generally just want an entry for a `script` bundle (which is special cased for the browserify bundle) and a `style` bundle, but arbitrary asset types are supported. Default:
+* `bundles` - A hash that maps asset types to bundle paths. You will generally just want an entry for a `style` bundle, but arbitrary asset types are supported. Default:
 
 ```javascript
 bundles : {
