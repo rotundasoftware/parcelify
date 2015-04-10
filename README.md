@@ -111,7 +111,7 @@ $ parcelify main.js -o bundle.css -t "sass-css-stream" -transformDir "."
 
 ### Catalog of transforms
 
-In addition to all [browserify transforms](https://github.com/substack/node-browserify/wiki/list-of-transforms), the following transforms can be used with parcelify. Please let us know if you develop a transform and we'll include it in this list.
+The following transforms can be used with parcelify. Please let us know if you develop a transform and we'll include it in this list.
 
 * [sass-css-stream](https://github.com/rotundasoftware/sass-css-stream) - convert sass to css.
 * [less-css-stream](https://github.com/jsdf/less-css-stream) - convert less to css.
