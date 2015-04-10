@@ -1,10 +1,10 @@
 # Parcelify
 
-A [browserify](http://browserify.org/) plugin to handle front-end assets like css.
+A [browserify](http://browserify.org/) plugin to handle css in npm modules.
 
 * Just add a `style` key to your `package.json` to specify the package's css file(s).
 * Efficiently transform scss / less to css, etc. using streams.
-* Rebuild css bundles automatically and efficiently in watch mode.
+* Rebuild css bundles automatically on changes in watch mode.
 * Leverage a robust API to create larger build tools like [cartero](https://github.com/rotundasoftware/cartero).
 
 Many thanks to [James Halliday](https://twitter.com/substack) for his help and guidance in bringing this project into reality.
