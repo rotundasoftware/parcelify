@@ -1,6 +1,6 @@
 # Parcelify
 
-A [browserify](http://browserify.org/) plugin so you can use npm to handle front-end assets like css.
+A [browserify](http://browserify.org/) plugin to handle front-end assets like css.
 
 * Just add a `style` key to your `package.json` to specify the package's css file(s).
 * Efficiently transform scss / less to css, etc. using streams.
