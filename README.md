@@ -46,10 +46,10 @@ Now run parcelify directly from the command line:
 $ parcelify main.js -o bundle.css
 ```
 
-or by using the `-p` (plugin) flag in a [browserify command](browserify command):
+or as a [browserify plugin](https://github.com/substack/node-browserify#plugins) using the `-p` flag:
 
 ```
-browserify -p [ parcelify -o bundle.css ] main.js -o bundle.js
+browserify main.js -o bundle.js -p [ parcelify -o bundle.css ]
 ```
 
 Parcelify will concatenate all the css files in the modules on which `main.js` depends -- in this case just `myModule.css` -- in the order of the js dependency graph, and write the output to `bundle.css`.
