@@ -40,10 +40,16 @@ myModule = require( 'my-module' );
 console.log( 'hello world' );
 ```
 
-Now run from the command line (or as part of a [browserify command](browserify command))
+Now run parceify directly from the command line
 
 ```
 $ parcelify main.js -o bundle.css
+```
+
+or as part of a [browserify command](browserify command)
+
+```
+browserify -p [ parcelify -o bundle.css ] main.js -o bundle.js
 ```
 
 Parcelify will concatenate all the css files in the modules on which `main.js` depends -- in this case just `myModule.css` -- in the order of the js dependency graph, and write the output to `bundle.css`.
@@ -144,14 +150,6 @@ Called when a new package is created. `package` is a package object as defined i
 
 ### p.on( 'assetUpdated', function( eventType, asset ){} );
 Called when a style asset is updated in watch mode. `eventType` is `'added'`, `'changed'`, or `'deleted'`, and `asset` is an asset object as defined in `lib/asset.js`.
-
-## Browserify plugin
-
-Since parcelify is a [browserify plugin](https://github.com/substack/node-browserify#plugins), you can tack it on to a browserify command using browserify's `-p` flag.
-
-```
-browserify -p [ parcelify -o output.css ] main.js -o output.js
-```
 
 ## Client side templates and other assets
 
