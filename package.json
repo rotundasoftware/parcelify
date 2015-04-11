@@ -23,8 +23,9 @@
     "underscore": "~1.6.0"
   },
   "devDependencies": {
-    "tape": "~2.3.2",
-    "sass-css-stream": "^0.1.4"
+    "browserify": "^9.0.8",
+    "sass-css-stream": "^0.1.4",
+    "tape": "~2.3.2"
   },
   "scripts": {
     "test": "tape test/test.js"
