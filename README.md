@@ -40,16 +40,17 @@ myModule = require( 'my-module' );
 console.log( 'hello world' );
 ```
 
-Now just parcelify as a [browserify plugin](https://github.com/substack/node-browserify#plugins) using browserify's `-p` flag:
+Now just run parcelify as a [browserify plugin](https://github.com/substack/node-browserify#plugins) using browserify's `-p` flag:
 
 ```
-$ npm install parcelify
 $ browserify main.js -o bundle.js -p [ parcelify -o bundle.css ]
 ``` 
 
 Parcelify will concatenate all the css files in the modules on which `main.js` depends -- in this case just `myModule.css` -- in the order of the js dependency graph, and write the output to `bundle.css`.
 
 ## Installation
+
+In your project directory,
 
 ```
 $ npm install parcelify
@@ -148,7 +149,7 @@ A tempting use case for this feature is client side templates - just include a `
 
 For the case of assets like images, that do not need to be concatenated, you can specify a `null` path for the bundle. Parcelify will collect all assets of that type but not concatenate them. You can then process the individual assets further using the event callbacks. See [cartero](https://github.com/rotundasoftware/cartero) for an example of this more advanced use case.
 
-### Using the parcelify command
+### Command line usage (depreciated)
 
 You can also run parcelify directly from the command line, although this functionality is depreciated. Note browserify needs to be installed (or watchify, in the case that the -w flag is used).
 
@@ -159,7 +160,7 @@ $ parcelify main.js -o bundle.css
 In addition to the options available when running parcelify as a browserify plugin, the follow options are also supported from the command line.
 
 ```
---jsBundle, -j    Path of the JavaScript bundle (i.e. browserify's output).
+--jsBundle, -j    Path to save the JavaScript bundle (i.e. browserify's output).
 
 --maps, -m        Enable JavaScript source maps in js bundles (for dev mode).
 
@@ -168,7 +169,7 @@ In addition to the options available when running parcelify as a browserify plug
 
 ## Contributors
 
-* [James Halliday](https://twitter.com/substack) (Initial design, sage advice, many supporting modules)
+* [James Halliday](https://twitter.com/substack) (Initial design, sage advice, supporting modules)
 * [David Beck](https://twitter.com/davegbeck)
 * [Oleg Seletsky](https://github.com/go-oleg)
 
