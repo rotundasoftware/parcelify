@@ -56,10 +56,10 @@ In your project directory,
 $ npm install parcelify
 ```
 
-## Options
+## Plugin options
 
 ```
---cssBundle, -o     Path of a destination css bundle.
+--cssBundle, -o     Path of the destination css bundle.
 
 --watch, -w         Watch mode - automatically rebuild bundles as appropriate for changes.
 
@@ -96,7 +96,7 @@ All transform modules are called on all assets. It is up to the transform module
 You can apply transforms to all packages within an entire branch of the directory tree (e.g. your entire app directory) using the `appTransforms` and `appTransformDirs` options or their corresponding command line arguments. Packages inside a `node_modules` folder located inside one of the supplied directories are not effected.
 
 ```
-$ parcelify main.js -o bundle.css -t "sass-css-stream" -transformDir "."
+$ browserify main.js -o bundle.js -p [ parcelify -o bundle.css -t sass-css-stream -d . ]
 ```
 
 ### Catalog of transforms
