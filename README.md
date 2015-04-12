@@ -48,6 +48,12 @@ $ browserify main.js -o bundle.js -p [ parcelify -o bundle.css ]
 
 Parcelify will concatenate all the css files in the modules on which `main.js` depends -- in this case just `myModule.css` -- in the order of the js dependency graph, and write the output to `bundle.css`.
 
+Use the `-w` flag to keep the bundle up to date when changes are made in dev mode:
+
+```
+$ watchify main.js -o bundle.js -p [ parcelify -wo bundle.css ]
+```
+
 ## Installation
 
 In your project directory,
@@ -58,17 +64,15 @@ $ npm install parcelify
 
 ## Plugin options
 
-```
 --cssBundle, -o     Path of the destination css bundle.
 
---watch, -w         Watch mode - automatically rebuild bundles as appropriate for changes.
+--watch, -w         Watch mode - automatically rebuild css bundle as appropriate for changes.
 
 --transform, -t     Name or path of an application transform. (See discussion of application transforms.)
 
 --transformDir, -d  Path of an application transform directory. (See discussion of application transforms.)
 
 --loglevel -l       Set the verbosity of npmlog, eg. "silent", "error", "warn", "info", "verbose"
-```
 
 ## Transforms
 
@@ -84,7 +88,7 @@ The safest and most portable way to apply transforms like sass -> css is using t
   "style" : "*.scss",
   "transforms" : [ "sass-css-stream" ],
   "dependencies" : {
-    "sass-css-stream": "~0.0.1"
+    "sass-css-stream": "^0.0.1"
   }
 }
 ```
@@ -93,7 +97,7 @@ All transform modules are called on all assets. It is up to the transform module
 
 ### Application level transforms
 
-You can apply transforms to all packages within an entire branch of the directory tree (e.g. your entire app directory) using the `appTransforms` and `appTransformDirs` options or their corresponding command line arguments. Packages inside a `node_modules` folder located inside one of the supplied directories are not effected.
+You can apply transforms to all packages within an entire branch of the directory tree (e.g. your entire app directory) using the `appTransforms` and `appTransformDirs` options or their corresponding command line arguments. Packages inside a `node_modules` folder located inside one of the supplied directories are not effected. For example, to transform all sass files inside the current working directory to css,
 
 ```
 $ browserify main.js -o bundle.js -p [ parcelify -o bundle.css -t sass-css-stream -d . ]

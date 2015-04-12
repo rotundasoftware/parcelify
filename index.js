@@ -35,13 +35,15 @@ function Parcelify( browserifyInstance, options ) {
 		// used internally or in order to share packages between multiple parcelify instances
 		existingPackages : undefined
 	} );
-	
+
 	// option aliases
 	if( _.isUndefined( options.bundles.style ) ) options.bundles.style = options.o || 'bundle.css';
 	if( _.isUndefined( options.appTransforms ) ) options.appTransforms = options.t || [];
 	if( _.isUndefined( options.appTransformDirs ) ) options.appTransformDirs = options.d || [];
 	if( _.isUndefined( options.watch ) ) options.watch = options.w || false;
 	if( _.isUndefined( options.logLevel ) ) options.logLevel = options.l;
+
+	if( _.isString( options.appTransforms ) ) options.appTransforms = [ options.appTransforms ];
 
 	// this.mainPath = mainPath;
 	this.watching = false;
