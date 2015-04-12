@@ -1,6 +1,6 @@
 # Parcelify
 
-Now you can include css in your npm modules consumed with [browserify](http://browserify.org/).
+Add css to your npm modules consumed with [browserify](http://browserify.org/).
 
 * Just add a `style` key to your `package.json` to specify the package's css file(s).
 * Efficiently transform scss / less to css, etc. using streams.
