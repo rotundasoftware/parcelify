@@ -26,16 +26,22 @@ function Parcelify( browserifyInstance, options ) {
 	options = _.defaults( {}, options, {
 		bundles : {},
 
-		appTransforms : [],
-		appTransformDirs : [],
+		appTransforms : undefined,
+		appTransformDirs : undefined,
 		
-		watch : false,
+		watch : undefined,
+		logLevel : undefined,
 
 		// used internally or in order to share packages between multiple parcelify instances
 		existingPackages : undefined
 	} );
-
-	if( _.isUndefined( options.bundles.style ) ) options.bundles.style = options.o || 'bundle.css'
+	
+	// option aliases
+	if( _.isUndefined( options.bundles.style ) ) options.bundles.style = options.o || 'bundle.css';
+	if( _.isUndefined( options.appTransforms ) ) options.appTransforms = options.t || [];
+	if( _.isUndefined( options.appTransformDirs ) ) options.appTransformDirs = options.d || [];
+	if( _.isUndefined( options.watch ) ) options.watch = options.w || false;
+	if( _.isUndefined( options.logLevel ) ) options.logLevel = options.l;
 
 	// this.mainPath = mainPath;
 	this.watching = false;

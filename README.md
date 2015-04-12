@@ -40,44 +40,33 @@ myModule = require( 'my-module' );
 console.log( 'hello world' );
 ```
 
-Now run parcelify directly from the command line:
+Run parcelify as a [browserify plugin](https://github.com/substack/node-browserify#plugins) using browserify's `-p` flag:
 
 ```
-$ parcelify main.js -o bundle.css
-```
-
-or as a [browserify plugin](https://github.com/substack/node-browserify#plugins) using the `-p` flag:
-
-```
-browserify main.js -o bundle.js -p [ parcelify -o bundle.css ]
-```
+$ npm install parcelify
+$ browserify main.js -o bundle.js -p [ parcelify -o bundle.css ]
+``` 
 
 Parcelify will concatenate all the css files in the modules on which `main.js` depends -- in this case just `myModule.css` -- in the order of the js dependency graph, and write the output to `bundle.css`.
 
 ## Installation
 
 ```
-$ npm install -g parcelify
+$ npm install parcelify
 ```
 
-## Command line options
+## Options
 
 ```
---cssBundle, -o   Path of a destination css bundle.
+--cssBundle, -o     Path of a destination css bundle.
 
---jsBundle, -j    Path of the JavaScript bundle (i.e. browserify's output).
+--watch, -w         Watch mode - automatically rebuild bundles as appropriate for changes.
 
---watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.
+--transform, -t     Name or path of an application transform. (See discussion of application transforms.)
 
---maps, -m        Enable JavaScript source maps in js bundles (for dev mode).
+--transformDir, -d  Path of an application transform directory. (See discussion of application transforms.)
 
---transform, -t   Name or path of an application transform. (See discussion of application transforms.)
-
---transformDir    Path of an application transform directory. (See discussion of application transforms.)
-
---loglevel        Set the verbosity of npmlog, eg. "silent", "error", "warn", "info", "verbose"
-
---help, -h        Show this message
+--loglevel -l       Set the verbosity of npmlog, eg. "silent", "error", "warn", "info", "verbose"
 ```
 
 ## Transforms
@@ -158,6 +147,26 @@ Parcelify actually supports concatenation / enumeration of arbitrary asset types
 A tempting use case for this feature is client side templates - just include a `template` key in package.json and a corresponding entry in the `bundles` option, and you have a bundle of client side templates. However, if you plan to share your packages we recommend against this practice as it makes your packages difficult to consume. Instead we recommend using a browserify transform like [nunjucksify](https://github.com/rotundasoftware/nunjucksify) or [node-hbsfy](https://github.com/epeli/node-hbsfy) to precompile templates and `require` them explicitly from your JavaScript files.
 
 For the case of assets like images, that do not need to be concatenated, you can specify a `null` path for the bundle. Parcelify will collect all assets of that type but not concatenate them. You can then process the individual assets further using the event callbacks. See [cartero](https://github.com/rotundasoftware/cartero) for an example of this more advanced use case.
+
+### Using the parcelify command
+
+You can also run parcelify directly from the command line, although this functionality is depreciated.
+
+```
+$ parcelify main.js -o bundle.css
+```
+
+#### Command line options
+
+In addition to the options available when running parcelify as a browserify plugin, the follow options are also supported from the command line.
+
+```
+--jsBundle, -j    Path of the JavaScript bundle (i.e. browserify's output).
+
+--maps, -m        Enable JavaScript source maps in js bundles (for dev mode).
+
+--help, -h        Show this message
+```
 
 ## Contributors
 
