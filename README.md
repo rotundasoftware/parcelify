@@ -1,6 +1,6 @@
 # Parcelify
 
-Now you can include css in your npm modules consumed with [browserify](http://browserify.org/).
+Add css to your npm modules consumed with [browserify](http://browserify.org/).
 
 * Just add a `style` key to your `package.json` to specify the package's css file(s).
 * Efficiently transform scss / less to css, etc. using streams.
@@ -40,7 +40,7 @@ myModule = require( 'my-module' );
 console.log( 'hello world' );
 ```
 
-Run parcelify as a [browserify plugin](https://github.com/substack/node-browserify#plugins) using browserify's `-p` flag:
+Now just parcelify as a [browserify plugin](https://github.com/substack/node-browserify#plugins) using browserify's `-p` flag:
 
 ```
 $ npm install parcelify
@@ -150,13 +150,11 @@ For the case of assets like images, that do not need to be concatenated, you can
 
 ### Using the parcelify command
 
-You can also run parcelify directly from the command line, although this functionality is depreciated.
+You can also run parcelify directly from the command line, although this functionality is depreciated. Note browserify needs to be installed (or watchify, in the case that the -w flag is used).
 
 ```
 $ parcelify main.js -o bundle.css
 ```
-
-#### Command line options
 
 In addition to the options available when running parcelify as a browserify plugin, the follow options are also supported from the command line.
 
