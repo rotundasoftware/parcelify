@@ -40,45 +40,39 @@ myModule = require( 'my-module' );
 console.log( 'hello world' );
 ```
 
-Now run parcelify directly from the command line:
+Now just run parcelify as a [browserify plugin](https://github.com/substack/node-browserify#plugins) using browserify's `-p` flag:
 
 ```
-$ parcelify main.js -o bundle.css
-```
-
-or as a [browserify plugin](https://github.com/substack/node-browserify#plugins) using the `-p` flag:
-
-```
-browserify main.js -o bundle.js -p [ parcelify -o bundle.css ]
-```
+$ browserify main.js -o bundle.js -p [ parcelify -o bundle.css ]
+``` 
 
 Parcelify will concatenate all the css files in the modules on which `main.js` depends -- in this case just `myModule.css` -- in the order of the js dependency graph, and write the output to `bundle.css`.
 
+Use the `-w` flag to keep the bundle up to date when changes are made in dev mode:
+
+```
+$ watchify main.js -o bundle.js -p [ parcelify -wo bundle.css ]
+```
+
 ## Installation
 
-```
-$ npm install -g parcelify
-```
-
-## Command line options
+In your project directory,
 
 ```
---cssBundle, -o   Path of a destination css bundle.
-
---jsBundle, -j    Path of the JavaScript bundle (i.e. browserify's output).
-
---watch, -w       Watch mode - automatically rebuild bundles as appropriate for changes.
-
---maps, -m        Enable JavaScript source maps in js bundles (for dev mode).
-
---transform, -t   Name or path of an application transform. (See discussion of application transforms.)
-
---transformDir    Path of an application transform directory. (See discussion of application transforms.)
-
---loglevel        Set the verbosity of npmlog, eg. "silent", "error", "warn", "info", "verbose"
-
---help, -h        Show this message
+$ npm install parcelify
 ```
+
+## Plugin options
+
+--cssBundle, -o     Path of the destination css bundle.
+
+--watch, -w         Watch mode - automatically rebuild css bundle as appropriate for changes.
+
+--transform, -t     Name or path of an application transform. (See discussion of application transforms.)
+
+--transformDir, -d  Path of an application transform directory. (See discussion of application transforms.)
+
+--loglevel -l       Set the verbosity of npmlog, eg. "silent", "error", "warn", "info", "verbose"
 
 ## Transforms
 
@@ -94,7 +88,7 @@ The safest and most portable way to apply transforms like sass -> css is using t
   "style" : "*.scss",
   "transforms" : [ "sass-css-stream" ],
   "dependencies" : {
-    "sass-css-stream": "~0.0.1"
+    "sass-css-stream": "^0.0.1"
   }
 }
 ```
@@ -103,10 +97,10 @@ All transform modules are called on all assets. It is up to the transform module
 
 ### Application level transforms
 
-You can apply transforms to all packages within an entire branch of the directory tree (e.g. your entire app directory) using the `appTransforms` and `appTransformDirs` options or their corresponding command line arguments. Packages inside a `node_modules` folder located inside one of the supplied directories are not effected.
+You can apply transforms to all packages within an entire branch of the directory tree (e.g. your entire app directory) using the `appTransforms` and `appTransformDirs` options or their corresponding command line arguments. Packages inside a `node_modules` folder located inside one of the supplied directories are not effected. For example, to transform all sass files inside the current working directory to css,
 
 ```
-$ parcelify main.js -o bundle.css -t "sass-css-stream" -transformDir "."
+$ browserify main.js -o bundle.js -p [ parcelify -o bundle.css -t sass-css-stream -d . ]
 ```
 
 ### Catalog of transforms
@@ -159,9 +153,27 @@ A tempting use case for this feature is client side templates - just include a `
 
 For the case of assets like images, that do not need to be concatenated, you can specify a `null` path for the bundle. Parcelify will collect all assets of that type but not concatenate them. You can then process the individual assets further using the event callbacks. See [cartero](https://github.com/rotundasoftware/cartero) for an example of this more advanced use case.
 
+### Command line usage (depreciated)
+
+You can also run parcelify directly from the command line, although this functionality is depreciated. Note browserify needs to be installed (or watchify, in the case that the -w flag is used).
+
+```
+$ parcelify main.js -o bundle.css
+```
+
+In addition to the options available when running parcelify as a browserify plugin, the follow options are also supported from the command line.
+
+```
+--jsBundle, -j    Path to save the JavaScript bundle (i.e. browserify's output).
+
+--maps, -m        Enable JavaScript source maps in js bundles (for dev mode).
+
+--help, -h        Show this message
+```
+
 ## Contributors
 
-* [James Halliday](https://twitter.com/substack) (Initial design, sage advice, many supporting modules)
+* [James Halliday](https://twitter.com/substack) (Initial design, sage advice, supporting modules)
 * [David Beck](https://twitter.com/davegbeck)
 * [Oleg Seletsky](https://github.com/go-oleg)
 
