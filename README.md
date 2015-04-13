@@ -64,6 +64,7 @@ $ npm install parcelify
 
 ## Plugin options
 
+```
 --cssBundle, -o     Path of the destination css bundle.
 
 --watch, -w         Watch mode - automatically rebuild css bundle as appropriate for changes.
@@ -73,6 +74,7 @@ $ npm install parcelify
 --transformDir, -d  Path of an application transform directory. (See discussion of application transforms.)
 
 --loglevel -l       Set the verbosity of npmlog, eg. "silent", "error", "warn", "info", "verbose"
+```
 
 ## Transforms
 
