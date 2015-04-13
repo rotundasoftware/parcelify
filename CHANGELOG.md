@@ -1,5 +1,9 @@
 # Change Log
 
+### v1.1.0
+* added support for single string as appTransformDirs
+* added single letter aliases for logLevel and appTransformDirs options
+
 ### v1.0.0
 * changed to browserify plugin architecture
 * now can be used with any compatible version of browserify
