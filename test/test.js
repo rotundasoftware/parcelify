@@ -217,6 +217,6 @@ test( 'page7', function( t ) {
 			[ 'bundle.css' ]
 		);
 
-		t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'p {\n\tcolor: red;\n}p {\n\tcolor: blue;\n}p {\n\tcolor: green;\n}div.beep {\n\tdiv.boop {\n\t\tcolor : green;\n\t}\n}' );
+		t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'p {\n\tcolor: red;\n}p.header {\n\tcolor: blue;\n}p.footer {\n\tcolor: green;\n}div.beep {\n\tcolor : green;\n}' );
 	} );
 } );
