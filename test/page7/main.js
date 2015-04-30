@@ -1,0 +1,2 @@
+require( 'header' );
+require( 'footer' );

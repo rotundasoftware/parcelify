@@ -188,3 +188,35 @@ test( 'page6', function( t ) {
 		t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'div.beep div.boop {\n  color: green; }\n' );
 	} );
 } );
+
+
+// ordering
+test( 'page7', function( t ) {
+	t.plan( 2 );
+	
+	var mainPath = __dirname + '/page7/main.js';
+	
+	var dstDir = path.resolve( tmpdir, 'parcelify-test-' + Math.random() );
+
+	var options = {
+		bundles : {
+			style : path.join( dstDir, 'bundle.css' )
+		}
+	};
+
+	mkdirp.sync( dstDir );
+
+	var b = browserify( mainPath );
+	var p = parcelify( b, options );
+
+	b.bundle();
+
+	p.on( 'done', function() {
+		t.deepEqual(
+			fs.readdirSync( dstDir ).sort(),
+			[ 'bundle.css' ]
+		);
+
+		t.deepEqual( fs.readFileSync( options.bundles.style, 'utf8' ), 'p {\n\tcolor: red;\n}p {\n\tcolor: blue;\n}p {\n\tcolor: green;\n}div.beep {\n\tdiv.boop {\n\t\tcolor : green;\n\t}\n}' );
+	} );
+} );
