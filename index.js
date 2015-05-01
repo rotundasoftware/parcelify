@@ -152,10 +152,8 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 							// don't stop writing other bundles if there was an error on this one. errors happen
 							// frequently with transforms.. like invalid scss, etc. don't stop the show, just 
 							// keep going with our other bundles.
-
+							
 							if( err ) _this.emit( 'error', err );
-							else _this.emit( 'bundleWritten', thisBundlePath, thisAssetType, _this.watching );
-
 							nextEach();
 						} );
 					}, nextSeries );
@@ -281,7 +279,7 @@ Parcelify.prototype._setupParcelEventRelays = function( parcel ) {
 		} );
 	} );
 
-	parcel.on( 'bundleUpdated', function( bundlePath, assetType ) {
-		_this.emit( 'bundleWritten', bundlePath, assetType, true );
+	parcel.on( 'bundleWritten', function( bundlePath, assetType ) {
+		_this.emit( 'bundleWritten', bundlePath, assetType, _this.watching );
 	} );
 };
