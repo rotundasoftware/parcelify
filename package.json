@@ -16,7 +16,7 @@
     "npmlog": "0.0.6",
     "parcel-map": "^2.0.0",
     "resolve": "~0.6.1",
-    "shasum": "~1.0.0",
+    "shasum": "~1.0.1",
     "stream-combiner": "0.0.4",
     "through2": "~0.6.3",
     "toposort": "~0.2.10",
