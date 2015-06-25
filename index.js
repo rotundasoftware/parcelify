@@ -48,7 +48,7 @@ function Parcelify( browserifyInstance, options ) {
 	// this.mainPath = mainPath;
 	this.watching = false;
 
-	if ( options.logLevel ) log.level = options.logLevel;
+	if( options.logLevel ) log.level = options.logLevel;
 
 	// before we jump the gun, return from this function so we can listen to events from the calling function
 	process.nextTick( function() {
@@ -257,6 +257,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 		} );
 
 		// finally, we can calculate the topo sort of all the dependencies and assets in the parcel
+		if( ! mappedParcel.calcSortedDependencies ) console.log( mappedParcel ); // debugging
 		mappedParcel.calcSortedDependencies();
 		mappedParcel.calcParcelAssets( assetTypes );
 
