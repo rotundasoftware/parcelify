@@ -17,7 +17,7 @@
     "parcel-map": "^2.0.0",
     "resolve": "~0.6.1",
     "shasum": "~1.0.1",
-    "stream-combiner": "0.0.4",
+    "stream-combiner": "^0.2.2",
     "through2": "~0.6.3",
     "toposort": "~0.2.10",
     "underscore": "~1.6.0"
