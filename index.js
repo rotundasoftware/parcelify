@@ -24,7 +24,10 @@ function Parcelify( browserifyInstance, options ) {
 	if( ! ( this instanceof Parcelify ) ) return new Parcelify( browserifyInstance, options );
 
 	options = _.defaults( {}, options, {
-		bundles : {},
+		bundles : {},						// ignored when bundlesByEntryPoint is provided
+
+		assetTypes : undefined,				// required when there are multiple entry points
+		bundlesByEntryPoint : undefined,	// required when there are multiple entry points
 
 		appTransforms : undefined,
 		appTransformDirs : undefined,
@@ -66,7 +69,7 @@ function Parcelify( browserifyInstance, options ) {
 				processParcelOptions.existingPackages = existingPackages;
 				processParcelOptions.mappedAssets = mappedAssets;
 
-				_this.processParcel( browserifyInstance, processParcelOptions, function( err ) {
+				_this.processParcels( browserifyInstance, processParcelOptions, function( err ) {
 					if( err ) _this.emit( 'error', err );
 				} );
 			}, 1000, true ) );
@@ -76,7 +79,7 @@ function Parcelify( browserifyInstance, options ) {
 		processParcelOptions.existingPackages = existingPackages;
 		processParcelOptions.mappedAssets = mappedAssets;
 
-		_this.processParcel( browserifyInstance, processParcelOptions, function( err ) {
+		_this.processParcels( browserifyInstance, processParcelOptions, function( err ) {
 			if( err ) _this.emit( 'error', err );
 		} );
 	} );
@@ -84,13 +87,11 @@ function Parcelify( browserifyInstance, options ) {
 	return _this;
 }
 
-Parcelify.prototype.processParcel = function( browserifyInstance, options, callback ) {
+Parcelify.prototype.processParcels = function( browserifyInstance, options, callback ) {
 	var _this = this;
 
 	var existingPackages = options.existingPackages || {};
-	//var existingAssets = options.existingPackages || {};
-	var assetTypes = Object.keys( options.bundles );
-	var mainParcelMap;
+	var assetTypes = options.assetTypes || Object.keys( options.bundles );
 	
 	var packages = _.reduce( existingPackages, function( memo, thisPackage, thisPackageId ) {
 		memo[ thisPackage.path ] = thisPackage.package;
@@ -113,9 +114,11 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 		return callback( err );
 	} );
 
-	parcelMapEmitter.on( 'done', function( mainParcelMap ) {
-		_this.instantiateParcelAndPackagesFromMap( mainParcelMap, existingPackages, assetTypes, options.appTransforms, options.appTransformDirs, function( err, packagesThatWereCreated ) {
+	parcelMapEmitter.on( 'done', function( parcelMapResult ) {
+		_this.instantiateParcelAndPackagesFromMap( parcelMapResult, existingPackages, assetTypes, options.appTransforms, options.appTransformDirs, function( err, packagesThatWereCreated ) {
 			if( err ) return callback( err );
+
+			var parcelsThatWereCreated = [];
 
 			process.nextTick( function() {
 				async.series( [ function( nextSeries ) {
@@ -126,24 +129,38 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 						log.verbose( 'Created new ' + ( isParcel ? 'parcel' : 'package' ) + ' ' + thisPackage.path + ' with id ' + thisPackage.id );
 
 						existingPackages[ thisPackage.id ] = thisPackage;
-						if( isParcel ) _this._setupParcelEventRelays( thisPackage );
+						if( isParcel ) {
+							_this._setupParcelEventRelays( thisPackage );
+							parcelsThatWereCreated.push( thisPackage );
+						}
 
 						thisPackage.on( 'error', function( err ) {
 							_this.emit( 'error', err );
 						} );
 
-						_this.emit( 'packageCreated', thisPackage, isParcel );
+						_this.emit( 'packageCreated', thisPackage );
 					} );
 
 					nextSeries();
 				}, function( nextSeries ) {
-					// we are done copying packages and collecting our asset streams. Now write our bundles to disk.
-					async.each( Object.keys( options.bundles ), function( thisAssetType, nextEach ) {
-						var thisBundlePath = options.bundles[ thisAssetType ];
-						if( ! thisBundlePath ) return nextEach();
+					if( parcelsThatWereCreated.length > 1 && ! options.bundlesByEntryPoint ) {
+						return nextSeries( new Error( 'Multiple entry points detected, but bundlesByEntryPoint option was not supplied.' ) );
+					}
 
-						async.each( _.values( packagesThatWereCreated ), function( thisParcel, nextEach ) {
-							if( ! thisParcel.isParcel ) return nextEach();
+					if( parcelsThatWereCreated.length === 1 && ! options.bundlesByEntryPoint ) {
+						options.bundlesByEntryPoint = {};
+						options.bundlesByEntryPoint[ _.first( parcelsThatWereCreated ).mainPath ] = options.bundles;
+					}
+
+					// we are done copying packages and collecting our asset streams. Now write our bundles to disk.
+					async.each( _.values( packagesThatWereCreated ), function( thisParcel, nextEach ) {
+						if( ! thisParcel.isParcel ) return nextEach();
+
+						var thisParcelBundles = options.bundlesByEntryPoint[ thisParcel.mainPath ];
+					
+						async.each( Object.keys( thisParcelBundles ), function( thisAssetType, nextEach ) {
+							var thisBundlePath = thisParcelBundles[ thisAssetType ];
+							if( ! thisBundlePath ) return nextEach();
 
 							thisParcel.writeBundle( thisAssetType, thisBundlePath, function( err ) {
 								// don't stop writing other bundles if there was an error on this one. errors happen
@@ -151,7 +168,7 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 								// keep going with our other bundles.
 
 								if( err ) _this.emit( 'error', err );
-								else _this.emit( 'bundleWritten', thisBundlePath, thisAssetType, _this.watching );
+								else _this.emit( 'bundleWritten', thisBundlePath, thisAssetType, thisParcel, _this.watching );
 
 								nextEach();
 							} );
@@ -163,7 +180,9 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 						// work in situations where we have multiple parcelify instances running that share common bundles
 						_.each( packagesThatWereCreated, function( thisPackage ) {
 							thisPackage.createWatchers( assetTypes, browserifyInstance._options.packageFilter, options.appTransforms, options.appTransformDirs );
-							if( thisPackage.isParcel ) thisPackage.attachWatchListeners( options.bundles );
+							if( thisPackage.isParcel ) {
+								thisPackage.attachWatchListeners( options.bundlesByEntryPoint[ thisPackage.mainPath ] );
+							}
 						} );
 					}
 
@@ -178,14 +197,14 @@ Parcelify.prototype.processParcel = function( browserifyInstance, options, callb
 	} );
 };
 
-Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, existingPacakages, assetTypes, appTransforms, appTransformDirs, callback ) {
+Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMapResult, existingPacakages, assetTypes, appTransforms, appTransformDirs, callback ) {
 	var _this = this;
 	var mappedParcel = null;
 	var packagesThatWereCreated = {};
 
 	async.series( [ function( nextSeries ) {
-		async.each( Object.keys( parcelMap.packages ), function( thisPackageId, nextPackageId ) {
-			var packageJson = parcelMap.packages[ thisPackageId ];
+		async.each( Object.keys( parcelMapResult.packages ), function( thisPackageId, nextPackageId ) {
+			var packageJson = parcelMapResult.packages[ thisPackageId ];
 			var packageOptions = {};
 
 			async.waterfall( [ function( nextWaterfall ) {
@@ -197,7 +216,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 
 				if( ! existingPacakages[ thisPackageId ] ) {
 					if( thisPackageIsAParcel ) {
-						thisPackage = packagesThatWereCreated[ thisPackageId ] = new Parcel( packageOptions );
+						thisPackage = packagesThatWereCreated[ thisPackageId ] = new Parcel( _.extend( packageOptions, { mainPath : packageJson.__mainPath } ) );
 					}
 					else thisPackage = packagesThatWereCreated[ thisPackageId ] = new Package( packageOptions );
 
@@ -236,7 +255,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 		var allPackages = _.extend( {}, existingPacakages, packagesThatWereCreated );
 
 		// now that we have all our packages instantiated, hook up dependencies
-		_.each( parcelMap.dependencies, function( dependencyIds, thisPackageId ) {
+		_.each( parcelMapResult.dependencies, function( dependencyIds, thisPackageId ) {
 			var thisPackage = allPackages[ thisPackageId ];
 
 			if( ! thisPackage ) return nextSeries( new Error( 'Unknown package id in dependency ' + thisPackageId ) );
@@ -252,7 +271,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMap, e
 				thisParcel.calcParcelAssets( assetTypes );
 
 				_.each( thisParcel.sortedDependencies, function( thisDependentPackage ) {
-					thisParcel.addDependentParcel( thisParcel );
+					thisDependentPackage.addDependentParcel( thisParcel );
 				} );
 			}
 		} );
@@ -275,6 +294,6 @@ Parcelify.prototype._setupParcelEventRelays = function( parcel ) {
 	} );
 
 	parcel.on( 'bundleUpdated', function( bundlePath, assetType ) {
-		_this.emit( 'bundleWritten', bundlePath, assetType, true );
+		_this.emit( 'bundleWritten', bundlePath, assetType, parcel, true );
 	} );
 };
