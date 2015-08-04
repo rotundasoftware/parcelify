@@ -148,8 +148,8 @@ Called when all bundles have been output.
 ### p.on( 'error', function( err ){} );
 Called when an error occurs.
 
-### p.on( 'packageCreated', function( package, isMain ){} );
-Called when a new package is created. `package` is a package object as defined in `lib/package.js`. `isMain` is true iff the package corresponds to the entry point `mainPath`.
+### p.on( 'packageCreated', function( package ){} );
+Called when a new package is created. `package` is a package object as defined in `lib/package.js`.
 
 ### p.on( 'assetUpdated', function( eventType, asset ){} );
 Called when a style asset is updated in watch mode. `eventType` is `'added'`, `'changed'`, or `'deleted'`, and `asset` is an asset object as defined in `lib/asset.js`.
