@@ -1,5 +1,8 @@
 # Change Log
 
+### v1.2.0
+* added support for multiple javascript entry points via the `bundlesByEntryPoint` option
+
 ### v1.1.0
 * added support for single string as appTransformDirs
 * added single letter aliases for logLevel and appTransformDirs options
