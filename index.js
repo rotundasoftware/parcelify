@@ -25,8 +25,6 @@ function Parcelify( browserifyInstance, options ) {
 
 	options = _.defaults( {}, options, {
 		bundles : {},						// ignored when bundlesByEntryPoint is provided
-
-		assetTypes : undefined,				// required when there are multiple entry points
 		bundlesByEntryPoint : undefined,	// required when there are multiple entry points
 
 		appTransforms : undefined,
@@ -91,7 +89,13 @@ Parcelify.prototype.processParcels = function( browserifyInstance, options, call
 	var _this = this;
 
 	var existingPackages = options.existingPackages || {};
-	var assetTypes = options.assetTypes || Object.keys( options.bundles );
+	var assetTypes;
+
+	if( options.bundlesByEntryPoint ) {
+		assetTypes = _.reduce( options.bundlesByEntryPoint, function( assetTypesMemo, bundlesForThisEntryPoint ) {
+			return _.union( assetTypesMemo, _.keys( bundlesForThisEntryPoint ) );
+		}, [] )
+	} else assetTypes = _.keys( options.bundles );
 	
 	var packages = _.reduce( existingPackages, function( memo, thisPackage, thisPackageId ) {
 		memo[ thisPackage.path ] = thisPackage.package;

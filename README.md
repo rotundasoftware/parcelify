@@ -3,7 +3,7 @@
 Add css to your npm modules consumed with [browserify](http://browserify.org/).
 
 * Just add a `style` key to your `package.json` to specify the package's css file(s).
-* Efficiently transform scss / less to css, etc. using streams.
+* Efficiently transform scss / less to css, etc. using transform streams.
 * Rebuild css bundles automatically on changes in watch mode.
 * Leverage a robust API to create larger build tools like [cartero](https://github.com/rotundasoftware/cartero).
 
@@ -126,6 +126,13 @@ The following transforms can be used with parcelify. Please let us know if you d
 ```javascript
 bundles : {
   style : 'bundle.css'   // bundle `style` assets and output here
+}
+```
+* `bundlesByEntryPoint` (default: undefined) - If multiple entry points have been supplied to the browserify instance, this option is used to determine the output bundles for each entry point, instead of `bundles`. For example:
+```
+{
+  '/Users/me/myWebApp/views/page1/page1.js' : { style : 'static/page1.css' },
+  '/Users/me/myWebApp/views/page2/page2.js' : { style : 'static/page2.css' }
 }
 ```
 * `appTransforms` (default: undefined) - An array of [transform modules](https://github.com/substack/module-deps#transforms) names / paths or functions to be applied to all packages in directories in the `appTransformDirs` array.
