@@ -166,13 +166,13 @@ Parcelify.prototype.processParcels = function( browserifyInstance, options, call
 							var thisBundlePath = thisParcelBundles[ thisAssetType ];
 							if( ! thisBundlePath ) return nextEach();
 
-							thisParcel.writeBundle( thisAssetType, thisBundlePath, function( err ) {
+							thisParcel.writeBundle( thisAssetType, thisBundlePath, function( err, bundleWasWritten ) {
 								// don't stop writing other bundles if there was an error on this one. errors happen
 								// frequently with transforms.. like invalid scss, etc. don't stop the show, just 
 								// keep going with our other bundles.
 
 								if( err ) _this.emit( 'error', err );
-								else _this.emit( 'bundleWritten', thisBundlePath, thisAssetType, thisParcel, _this.watching );
+								else if( bundleWasWritten ) _this.emit( 'bundleWritten', thisBundlePath, thisAssetType, thisParcel, _this.watching );
 
 								nextEach();
 							} );

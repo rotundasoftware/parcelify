@@ -15,6 +15,7 @@ var argv = minimist( process.argv.slice(2),
 			jsBundle : 'j',
 			cssBundle : 'c',
 			transform : 't',
+			transformDirs : 'd',
 			watch : 'w',
 			maps : 'm',
 			help : 'h'
@@ -34,10 +35,14 @@ var jsBundle = resolvePath( argv.jsBundle ) || path.resolve( tmpdir, 'parcelify-
 var cssBundle = resolvePath( argv.cssBundle );
 var tmplBundle = resolvePath( argv.tmplBundle );
 var mainPath = resolvePath( argv._[0] );
+var appTransforms = argv.transform;
+var appTransformDirs = argv.transformDirs;
 var defaultTransforms = argv.transform;
 var logLevel = argv.loglevel;
 var watch = argv.watch;
 var maps = argv.maps;
+
+if( typeof appTransformDirs === 'string' ) appTransformDirs = [ appTransformDirs ];
 
 if( ! mainPath ) {
 	console.log( 'No entry point specified' );
@@ -53,7 +58,8 @@ var p = parcelify( browserifyInstance, {
 		style : cssBundle,
 		template : tmplBundle
 	},
-	defaultTransforms : defaultTransforms,
+	appTransforms : appTransforms,
+	appTransformDirs : appTransformDirs,
 	browserifyBundleOptions : {
 		debug : maps
 	},

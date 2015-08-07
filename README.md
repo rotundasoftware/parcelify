@@ -22,7 +22,7 @@ Many thanks to [James Halliday](https://twitter.com/substack) for his help and g
 └── main.js
 ```
 
-In my-module's `package.json`, the module's style assets just need to be enumerated (glob notation):
+In my-module's `package.json`, the module's style assets just need to be enumerated ([glob](https://github.com/isaacs/node-glob#glob-primer) notation):
 
 ```
 {
@@ -99,7 +99,7 @@ All transform modules are called on all assets. It is up to the transform module
 
 ### Application level transforms
 
-You can apply transforms to all packages within an entire branch of the directory tree (e.g. your entire app directory) using the `appTransforms` and `appTransformDirs` options or their corresponding command line arguments. Packages inside a `node_modules` folder located inside one of the supplied directories are not effected. For example, to transform all sass files inside the current working directory to css,
+You can apply transforms to all packages within an entire branch of the directory tree using the `appTransforms` and `appTransformDirs` options or their corresponding command line arguments. (Packages inside a `node_modules` folder located inside one of the supplied directories are not effected.) For example, to transform all sass files inside the current working directory to css,
 
 ```
 $ browserify main.js -o bundle.js -p [ parcelify -o bundle.css -t sass-css-stream -d . ]
