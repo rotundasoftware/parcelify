@@ -22,7 +22,7 @@ Many thanks to [James Halliday](https://twitter.com/substack) for his help and g
 └── main.js
 ```
 
-In my-module's `package.json`, the module's style assets just need to be enumerated ([glob](https://github.com/isaacs/node-glob#glob-primer) notation):
+In my-module's `package.json`, the module's style assets just need to be enumerated (in [glob](https://github.com/isaacs/node-glob#glob-primer) notation):
 
 ```
 {
