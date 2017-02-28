@@ -1,3 +1,9 @@
+_This is a [fork](https://github.com/rotundasoftware/parcelify) with [event-based watch mode](https://github.com/jholster/parcelify/commit/d04e43ed15806e104ba72e43ed835db0ac3104b4). The original README included below._
+
+`npm install parcelify2`
+
+--------------------------
+
 # Parcelify
 
 Add css to your npm modules consumed with [browserify](http://browserify.org/).
@@ -9,7 +15,6 @@ Add css to your npm modules consumed with [browserify](http://browserify.org/).
 
 Many thanks to [James Halliday](https://twitter.com/substack) for his help and guidance in bringing this project into reality.
 
-[![build status](https://secure.travis-ci.org/rotundasoftware/parcelify.png)](https://api.travis-ci.org/rotundasoftware/parcelify.svg?branch=master)
 
 ## How dat work?
 
