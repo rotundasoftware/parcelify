@@ -189,3 +189,4 @@ In addition to the options available when running parcelify as a browserify plug
 ## License
 
 MIT
+
