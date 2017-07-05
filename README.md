@@ -117,9 +117,11 @@ The following transforms can be used with parcelify. Please let us know if you d
 
 ## API
 
+First instantiate a parcelify instance.
+
 #### p = parcelify( b, [options] )
 
-`b` is a browserify instance. You must call `b.bundle()` before parcelify will do its thing. Options are:
+`b` is a browserify instance. Then you must call `b.bundle()` to start browserify, which will automatically trigger parcelify. Options are:
 
 * `bundles` - A hash that maps asset types to bundle paths. You will generally just want an entry for a `style` bundle, but arbitrary asset types are supported. Default:
 
