@@ -20,7 +20,8 @@ inherits( Parcelify, EventEmitter );
 
 function Parcelify( browserifyInstance, options ) {
 	var _this = this;
-	
+	this.preProcessors = [];
+
 	if( ! ( this instanceof Parcelify ) ) return new Parcelify( browserifyInstance, options );
 
 	options = _.defaults( {}, options, {
@@ -127,25 +128,34 @@ Parcelify.prototype.processParcels = function( browserifyInstance, options, call
 			process.nextTick( function() {
 				async.series( [ function( nextSeries ) {
 					// fire package events for any new packages
-					_.each( packagesThatWereCreated, function( thisPackage ) {
-						var isParcel = thisPackage.isParcel;
+					var pipelinePackages = _.map( packagesThatWereCreated, function( thisPackage ) {
+						return function (nextPackage) {
+							var isParcel = thisPackage.isParcel;
 
-						log.verbose( 'Created new ' + ( isParcel ? 'parcel' : 'package' ) + ' ' + thisPackage.path + ' with id ' + thisPackage.id );
+							log.verbose( 'Created new ' + ( isParcel ? 'parcel' : 'package' ) + ' ' + thisPackage.path + ' with id ' + thisPackage.id );
 
-						existingPackages[ thisPackage.id ] = thisPackage;
-						if( isParcel ) {
-							_this._setupParcelEventRelays( thisPackage );
-							parcelsThatWereCreated.push( thisPackage );
-						}
+							existingPackages[ thisPackage.id ] = thisPackage;
+							if( isParcel ) {
+								_this._setupParcelEventRelays( thisPackage );
+								parcelsThatWereCreated.push( thisPackage );
+							}
 
-						thisPackage.on( 'error', function( err ) {
-							_this.emit( 'error', err );
-						} );
+							thisPackage.on( 'error', function( err ) {
+								_this.emit( 'error', err );
+							} );
 
-						_this.emit( 'packageCreated', thisPackage );
+							var pipelineProcessors = _.map( _this.preProcessors, function (p) {
+								return async.apply( p, thisPackage);
+							});
+
+							async.parallel(pipelineProcessors, nextPackage);
+
+							_this.emit( 'packageCreated', thisPackage );
+						};
 					} );
 
-					nextSeries();
+					async.parallel(pipelinePackages, nextSeries);
+
 				}, function( nextSeries ) {
 					if( parcelsThatWereCreated.length > 1 && ! options.bundlesByEntryPoint ) {
 						return nextSeries( new Error( 'Multiple entry points detected, but bundlesByEntryPoint option was not supplied.' ) );
@@ -199,6 +209,10 @@ Parcelify.prototype.processParcels = function( browserifyInstance, options, call
 			return callback( null );
 		} );
 	} );
+};
+
+Parcelify.prototype.addPreProcessor = function (preProcessor) {
+	this.preProcessors.push(preProcessor);
 };
 
 Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMapResult, existingPacakages, assetTypes, appTransforms, appTransformDirs, callback ) {
