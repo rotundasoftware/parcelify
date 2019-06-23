@@ -164,9 +164,9 @@ A tempting use case for this feature is client side templates - just include a `
 
 For the case of assets like images, that do not need to be concatenated, you can specify a `null` path for the bundle. Parcelify will collect all assets of that type but not concatenate them. You can then process the individual assets further using the event callbacks. See [cartero](https://github.com/rotundasoftware/cartero) for an example of this more advanced use case.
 
-### Command line usage (depreciated)
+### Command line usage (deprecated)
 
-You can also run parcelify directly from the command line, although this functionality is depreciated. Note browserify needs to be installed (or watchify, in the case that the -w flag is used).
+You can also run parcelify directly from the command line, although this functionality is deprecated. Note browserify needs to be installed (or watchify, in the case that the -w flag is used).
 
 ```
 $ parcelify main.js -o bundle.css
