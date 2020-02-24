@@ -1,7 +1,7 @@
 {
   "name": "parcelify2",
   "version": "2.2.2",
-  "description": "Create css bundles from npm packages using the browserify dependency graph."D,
+  "description": "Create css bundles from npm packages using the browserify dependency graph.",
   "main": "index.js",
   "bin": {
     "parcelify": "bin/cmd.js"
