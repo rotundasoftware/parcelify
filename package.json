@@ -9,7 +9,7 @@
   "dependencies": {
     "async": "^2.1.5",
     "chokidar": "^1.6.1",
-    "glob": "~7.1.1",
+    "glob": "~7.1.6",
     "inherits": "~2.0.3",
     "minimist": "1.2.0",
     "mkdirp": "~0.5.1",
